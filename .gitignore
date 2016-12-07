@@ -32,3 +32,6 @@ Debug/
 x64/
 *.opendb
 *.db
+
+build
+.vs
