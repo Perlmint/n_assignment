@@ -1,13 +1,5 @@
-//
-//  Node.hpp
-//  aaaa
-//
-//  Created by Gyusun Yeom on 2016. 12. 8..
-//  Copyright © 2016년 Gyusun Yeom. All rights reserved.
-//
+#pragma once
 
-#ifndef Node_hpp
-#define Node_hpp
 #include "point.hpp"
 #include "shplib/shapefil.h"
 
@@ -24,5 +16,3 @@ public:
 private:
   Point _point;
 };
-
-#endif /* Node_hpp */

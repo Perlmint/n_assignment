@@ -1,11 +1,3 @@
-//
-//  World.cpp
-//  aaaa
-//
-//  Created by Gyusun Yeom on 2016. 12. 8..
-//  Copyright © 2016년 Gyusun Yeom. All rights reserved.
-//
-
 #include "World.hpp"
 #include <iostream>
 #include <algorithm>

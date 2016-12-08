@@ -1,13 +1,4 @@
-//
-//  World.hpp
-//  aaaa
-//
-//  Created by Gyusun Yeom on 2016. 12. 8..
-//  Copyright © 2016년 Gyusun Yeom. All rights reserved.
-//
-
-#ifndef World_hpp
-#define World_hpp
+#pragma once
 
 #include <memory>
 #include <unordered_set>
@@ -42,6 +33,3 @@ private:
   std::unordered_multimap<Node*, Path*> _pathLink;
   std::unordered_set<std::unique_ptr<Path>> _paths;
 };
-
-
-#endif /* World_hpp */

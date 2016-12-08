@@ -1,13 +1,4 @@
-//
-//  Path.hpp
-//  aaaa
-//
-//  Created by Gyusun Yeom on 2016. 12. 8..
-//  Copyright © 2016년 Gyusun Yeom. All rights reserved.
-//
-
-#ifndef Path_hpp
-#define Path_hpp
+#pragma once
 
 #include <list>
 #include "point.hpp"
@@ -24,5 +15,3 @@ public:
     Node * point1;
     Node * point2;
 };
-
-#endif /* Path_hpp */
