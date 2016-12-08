@@ -10,20 +10,15 @@
 #define Path_hpp
 
 #include <list>
+#include "point.hpp"
 #include "shplib/shapefil.h"
 
 class Node;
+class World;
 
 class Path {
 public:
-    class Point {
-    public:
-        Point(double _x, double _y) : x(_x), y(_y) {}
-        double x;
-        double y;
-    };
-    
-    Path(SHPObject *obj);
+    Path(SHPObject *obj, World &world);
     
     std::list<Point> points;
     Node * point1;

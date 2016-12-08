@@ -29,6 +29,7 @@ add_executable(assignment3
   assignment3/World.hpp
   assignment3/Path.cpp
   assignment3/Path.hpp
+  assignment3/point.hpp
   assignment3/Node.hpp)
 target_link_libraries(assignment3 shapelib)
 target_compile_features(assignment3 PRIVATE

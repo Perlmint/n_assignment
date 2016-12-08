@@ -7,8 +7,9 @@
 //
 
 #include "World.hpp"
-#include <string>
 #include <iostream>
+#include <algorithm>
+#include "Path.hpp"
 
 World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
 {
@@ -24,7 +25,8 @@ void World::loadNode(const std::string &filePath)
     
     for (int32_t i = 0; i < entityCount; i++) {
         SHPObject *obj = SHPReadObject(shpHandle, i);
-        _nodes.emplace(obj);
+        auto node = new Node(obj);
+        _nodes.emplace(node->point(), node);
         SHPDestroyObject(obj);
     }
     
@@ -39,7 +41,10 @@ void World::loadLink(const std::string &filePath)
     
     for (int32_t i = 0; i < entityCount; i++) {
         SHPObject *obj = SHPReadObject(shpHandle, i);
-        //_nodes.push_back(std::move(Node(obj)));
+        auto path = new Path(obj, *this);
+        _paths.emplace(path);
+        _pathLink.insert(std::make_pair(path->point1, path));
+        _pathLink.insert(std::make_pair(path->point2, path));
         SHPDestroyObject(obj);
     }
     
@@ -67,4 +72,17 @@ std::ostream &operator<<(std::ostream &s, const World &w)
     << "  y: " << w._minY << " ~ " << w._maxY << std::endl
     << "  nodes count: " << w._nodes.size() << std::endl
     << "]";
+}
+
+Node *World::getNode(double x, double y)
+{
+  auto itr = _nodes.find(Point(x, y));
+  if (itr == _nodes.end())
+  {
+    return nullptr;
+  }
+  else
+  {
+    return itr->second.get();
+  }
 }
