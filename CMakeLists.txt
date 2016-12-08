@@ -22,6 +22,9 @@ add_library(shapelib
   assignment3/shplib/safileio.c
   assignment3/shplib/shpopen.c
   assignment3/shplib/shptree.c)
+if(WIN32)
+  target_compile_definitions(shapelib PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif(WIN32)
 
 add_executable(assignment3
   assignment3/main.cpp
