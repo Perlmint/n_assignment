@@ -34,22 +34,24 @@ public:
     return _data.size();
   }
 
-  typename std::vector<T>::const_iterator begin() const
+  using const_iterator = typename std::vector<T>::const_iterator;
+
+  const_iterator begin() const
   {
     return _data.begin();
   }
 
-  typename std::vector<T>::const_iterator end() const
+  const_iterator end() const
   {
     return _data.end();
   }
 
-  typename std::vector<T>::const_iterator rbegin() const
+  const_iterator rbegin() const
   {
     return _data.rbegin();
   }
 
-  typename std::vector<T>::const_iterator rend() const
+  const_iterator rend() const
   {
     return _data.rend();
   }
