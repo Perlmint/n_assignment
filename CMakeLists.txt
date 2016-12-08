@@ -1,7 +1,9 @@
 project(assignments)
 
 add_executable(assignment1 assignment1/main.cpp)
-target_compile_features(assignment1 PRIVATE cxx_range_for)
+target_compile_features(assignment1 PRIVATE
+  cxx_generalized_initializers
+  cxx_range_for)
 
 add_executable(assignment2 assignment2/main.cpp)
 
@@ -18,4 +20,7 @@ add_executable(assignment3
   assignment3/Path.hpp
   assignment3/Node.hpp)
 target_link_libraries(assignment3 shapelib)
-target_compile_features(assignment3 PRIVATE cxx_range_for)
+target_compile_features(assignment3 PRIVATE
+  cxx_nullptr
+  cxx_uniform_initialization
+  cxx_range_for)
