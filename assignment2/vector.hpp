@@ -198,6 +198,16 @@ public:
     }
   }
 
+  T front()
+  {
+    return at(0);
+  }
+
+  T last()
+  {
+    return at(size() - 1);
+  }
+
   size_t size() const
   {
     return _size;
