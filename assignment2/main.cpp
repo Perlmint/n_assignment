@@ -11,11 +11,16 @@ class Stack
 private:
     std::vector<T> _data;
 public:
-  Stack() {}
+  Stack() noexcept {}
 
   void push(const T& value)
   {
     _data.push_back(value);
+  }
+
+  void clear()
+  {
+    _data.clear();
   }
 
   T pop()
@@ -32,16 +37,43 @@ public:
   {
     return _data.size();
   }
+
+  typename std::vector<T>::const_iterator begin() const
+  {
+    return _data.begin();
+  }
+
+  typename std::vector<T>::const_iterator end() const
+  {
+    return _data.end();
+  }
+
+  typename std::vector<T>::const_iterator rbegin() const
+  {
+    return _data.rbegin();
+  }
+
+  typename std::vector<T>::const_iterator rend() const
+  {
+    return _data.rend();
+  }
+
+  T operator[](size_t index) const
+  {
+    return _data.at(index);
+  }
+
+  T &operator[](size_t index)
+  {
+    return _data[index];
+  }
 };
 
 template<typename T>
 class Heap
 {
 public:
-  Heap()
-    : _comparator(std::less<T>())
-  {}
-  Heap(const std::function<bool(const T&, const T&)> &cmp)
+  Heap(const std::function<bool(const T&, const T&)> &cmp = std::less<T>()) noexcept
     : _comparator(cmp)
   {}
 
@@ -62,6 +94,40 @@ public:
     }
   }
 
+  void clear()
+  {
+    _data.clear();
+  }
+
+  typename std::vector<T>::const_iterator begin() const
+  {
+    return _data.begin();
+  }
+
+  typename std::vector<T>::const_iterator end() const
+  {
+    return _data.end();
+  }
+
+  typename std::vector<T>::const_iterator rbegin() const
+  {
+    return _data.rbegin();
+  }
+
+  typename std::vector<T>::const_iterator rend() const
+  {
+    return _data.rend();
+  }
+
+  T operator[](size_t index) const
+  {
+    return _data.at(index);
+  }
+
+  T &operator[](size_t index)
+  {
+    return _data[index];
+  }
 private:
   std::vector<T> _data;
   std::function<bool(const T&, const T&)> _comparator;
