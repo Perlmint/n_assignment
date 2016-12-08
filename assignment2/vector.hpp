@@ -14,6 +14,88 @@ public:
     : _heap(cmp)
   {}
 
+  Vector &operator=(const Vector &other)
+  {
+    _stack.clear();
+    _heap.clear();
+    _size = other._size;
+
+    if (_size > 4)
+    {
+      _heap = other._heap;
+    }
+    _stack = other._stack;
+
+    return *this;
+  }
+
+  Vector &operator=(Vector &&other) noexcept
+  {
+    _size = other._size;
+
+    _heap = other._heap;
+    _stack = other._stack;
+
+    return *this;
+  }
+
+  Vector& operator=(std::initializer_list<T> ilist)
+  {
+    assign(ilist);
+
+    return *this;
+  }
+
+  void assign(size_t count, const T& value)
+  {
+    _size = count;
+    _stack.clear();
+    _heap.clear();
+    if (_size > 4)
+    {
+      for (auto i = 0; i < count; ++i)
+      {
+        _stack.push(value);
+      }
+    }
+    else
+    {
+      for (auto i = 0; i < count; ++i)
+      {
+        _heap.push(value);
+      }
+    }
+  }
+
+  template< class InputIt >
+  void assign(InputIt first, InputIt last)
+  {
+    for(; first != last; ++first)
+    {
+      push_back(*first);
+    }
+  }
+
+  void assign(std::initializer_list<T> ilist)
+  {
+    _size = ilist.size();
+
+    if (_size > 4)
+    {
+      for (const auto &val : ilist)
+      {
+        _stack.push(val);
+      }
+    }
+    else
+    {
+      for (const auto &val : ilist)
+      {
+        _heap.push(val);
+      }
+    }
+  }
+
   void push_back(const T& val)
   {
     if (++_size <= 4)
@@ -34,11 +116,11 @@ public:
     }
   }
 
-  T pop_back()
+  void pop_back()
   {
     if (--_size < 4)
     {
-      return _stack.pop();
+      _stack.pop();
     }
     else
     {
@@ -49,13 +131,50 @@ public:
         {
           _stack.push(val);
         }
-        return _stack.pop();
+        _stack.pop();
       }
-      return _heap.extract();
+      else
+      {
+        _heap.extract();
+      }
     }
   }
 
-  T at(size_t index) const
+  T &at(size_t index)
+  {
+    if (index > _size)
+    {
+      throw std::out_of_range("index is out of range");
+    }
+
+    if (_size <= 4)
+    {
+      return _stack[index];
+    }
+    else
+    {
+      return _heap[index];
+    }
+  }
+
+  const T &at(size_t index) const
+  {
+    if (index > _size)
+    {
+      throw std::out_of_range("index is out of range");
+    }
+
+    if (_size <= 4)
+    {
+      return _stack[index];
+    }
+    else
+    {
+      return _heap[index];
+    }
+  }
+
+  T operator[](size_t index) const
   {
     if (_size <= 4)
     {
@@ -67,6 +186,77 @@ public:
     }
   }
 
+  T &operator[](size_t index)
+  {
+    if (_size <= 4)
+    {
+      return _stack[index];
+    }
+    else
+    {
+      return _heap[index];
+    }
+  }
+
+  size_t size() const
+  {
+    return _size;
+  }
+
+  bool empty() const
+  {
+    return _size == 0;
+  }
+
+  void clear()
+  {
+    _size = 0;
+    _stack.clear();
+    // no need to clear heap. now
+  }
+
+  using iterator = typename std::vector<T>::iterator;
+  using const_iterator = typename std::vector<T>::const_iterator;
+
+  const_iterator begin() const
+  {
+    if (_size > 4)
+    {
+      return _heap.begin();
+    }
+
+    return _heap.begin();
+  }
+
+  const_iterator end() const
+  {
+    if (_size > 4)
+    {
+      return _heap.end();
+    }
+
+    return _heap.end();
+  }
+
+  const_iterator rbegin() const
+  {
+    if (_size > 4)
+    {
+      return _heap.rbegin();
+    }
+
+    return _heap.rbegin();
+  }
+
+  const_iterator rend() const
+  {
+    if (_size > 4)
+    {
+      return _heap.rend();
+    }
+
+    return _heap.rend();
+  }
 
 private:
   Stack<T> _stack;
