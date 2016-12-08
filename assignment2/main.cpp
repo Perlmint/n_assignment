@@ -97,6 +97,37 @@ public:
     }
   }
 
+  T extract()
+  {
+    T ret = _data[0];
+    _data[0] = _data.at(_data.size() - 1);
+    _data.pop_back();
+    int curIndex = 0;
+    int childIndex = getLeftChildIndex(curIndex);
+
+    int lastIndex = _data.size() - 1;
+    while(childIndex <= lastIndex)
+    {
+      if (_comparator(_data[childIndex], _data[curIndex]))
+      {
+        std::swap(_data[curIndex], _data[childIndex]);
+        curIndex = childIndex;
+        childIndex = getLeftChildIndex(childIndex);
+      }
+      else
+      {
+        if (childIndex % 2 == 0)
+        {
+          break;
+        }
+        else
+        {
+          ++childIndex;
+        }
+      }
+    }
+  }
+
   void clear()
   {
     _data.clear();
@@ -152,6 +183,17 @@ private:
     ret >>= 1;
 
     return (ret >> 1) + (index - ret + 1) / 2 - 1;
+  }
+
+  int getLeftChildIndex(int index)
+  {
+    ++index;
+    int ret = 1;
+    while(ret < index)
+    {
+      ret = (ret << 1) + 1;
+    }
+    return ret;
   }
 };
 
