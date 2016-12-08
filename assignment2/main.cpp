@@ -15,7 +15,7 @@ public:
 
   void push(const T& value)
   {
-      _data.push_back(value);
+    _data.push_back(value);
   }
 
   T pop()
