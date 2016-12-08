@@ -1,6 +1,8 @@
 project(assignments)
 
 add_executable(assignment1 assignment1/main.cpp)
+target_compile_features(assignment1 PRIVATE cxx_range_for)
+
 add_executable(assignment2 assignment2/main.cpp)
 
 add_library(shapelib
