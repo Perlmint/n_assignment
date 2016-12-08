@@ -3,6 +3,9 @@
 #include "stack.hpp"
 #include "heap.hpp"
 
+/**
+ * Custom Vector using stack or heap
+ */
 template<typename T>
 class Vector
 {
