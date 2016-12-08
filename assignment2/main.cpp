@@ -82,13 +82,16 @@ public:
     _data.push_back(val);
     int curIndex = _data.size() - 1;
     int parentIndex = getParentIndex(curIndex);
-    while(parentIndex != -1) {
-      if (_comparator(_data[curIndex], _data[parentIndex])) {
+    while(parentIndex != -1)
+    {
+      if (_comparator(_data[curIndex], _data[parentIndex]))
+      {
         std::swap(_data[curIndex], _data[parentIndex]);
         curIndex = parentIndex;
         parentIndex = getParentIndex(curIndex);
       }
-      else {
+      else
+      {
         break;
       }
     }
@@ -142,7 +145,8 @@ private:
     // make 1-based index
     ++index;
     int ret = 1;
-    while(ret < index) {
+    while (ret < index)
+    {
       ret = (ret << 1) + 1;
     }
     ret >>= 1;
