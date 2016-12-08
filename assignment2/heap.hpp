@@ -9,7 +9,7 @@ template<typename T>
 class Heap
 {
 public:
-  Heap(const std::function<bool(const T&, const T&)> &cmp = std::less<T>()) noexcept
+  explicit Heap(const std::function<bool(const T&, const T&)> &cmp = std::less<T>()) noexcept
     : _comparator(cmp)
   {}
 
@@ -17,7 +17,7 @@ public:
   {
     _data.push_back(val);
     int curIndex = _data.size() - 1;
-    int parentIndex = getParentIndex(curIndex);
+    auto parentIndex = getParentIndex(curIndex);
     while(parentIndex != -1)
     {
       if (_comparator(_data[curIndex], _data[parentIndex]))
@@ -38,8 +38,8 @@ public:
     T ret = _data[0];
     _data[0] = _data.at(_data.size() - 1);
     _data.pop_back();
-    int curIndex = 0;
-    int childIndex = getLeftChildIndex(curIndex);
+    auto curIndex = 0;
+    auto childIndex = getLeftChildIndex(curIndex);
 
     int lastIndex = _data.size() - 1;
     while(childIndex <= lastIndex)
@@ -102,7 +102,7 @@ private:
   std::vector<T> _data;
   std::function<bool(const T&, const T&)> _comparator;
 
-  int getParentIndex(int index)
+  static int getParentIndex(int index)
   {
     if (index == 0)
     {
@@ -111,7 +111,7 @@ private:
 
     // make 1-based index
     ++index;
-    int ret = 1;
+    auto ret = 1;
     while (ret < index)
     {
       ret = (ret << 1) + 1;
@@ -121,10 +121,10 @@ private:
     return (ret >> 1) + (index - ret + 1) / 2 - 1;
   }
 
-  int getLeftChildIndex(int index)
+  static int getLeftChildIndex(int index)
   {
     ++index;
-    int ret = 1;
+    auto ret = 1;
     while(ret < index)
     {
       ret = (ret << 1) + 1;

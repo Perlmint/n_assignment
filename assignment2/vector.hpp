@@ -7,7 +7,7 @@ template<typename T>
 class Vector
 {
 public:
-  Vector(const std::function<bool(const T&, const T&)> &cmp = std::less<T>()) noexcept
+  explicit Vector(const std::function<bool(const T&, const T&)> &cmp = std::less<T>()) noexcept
     : _heap(cmp)
   {}
 
