@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.2)
 project(assignments)
 
 add_executable(assignment1 assignment1/main.cpp)
