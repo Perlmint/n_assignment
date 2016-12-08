@@ -5,13 +5,23 @@ target_compile_features(assignment1 PRIVATE
   cxx_generalized_initializers
   cxx_range_for)
 
-add_executable(assignment2 assignment2/main.cpp)
+add_executable(assignment2
+  assignment2/main.cpp
+  assignment2/utils.hpp
+  assignment2/stack.hpp
+  assignment2/heap.hpp
+  assignment2/vector.hpp)
+target_compile_features(assignment2 PRIVATE
+  cxx_noexcept
+  cxx_range_for
+  cxx_return_type_deduction)
 
 add_library(shapelib
   assignment3/shplib/dbfopen.c
   assignment3/shplib/safileio.c
   assignment3/shplib/shpopen.c
   assignment3/shplib/shptree.c)
+
 add_executable(assignment3
   assignment3/main.cpp
   assignment3/World.cpp
