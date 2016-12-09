@@ -3,6 +3,13 @@
 #include <algorithm>
 #include "Path.hpp"
 
+World::World()
+  : _minX(std::numeric_limits<double>::max())
+  , _minY(std::numeric_limits<double>::max())
+  , _maxX(std::numeric_limits<double>::min())
+  , _maxY(std::numeric_limits<double>::min())
+{}
+
 World::World(World &&other) noexcept
   : _minX(other._minX)
   , _minY(other._minY)
@@ -14,6 +21,7 @@ World::World(World &&other) noexcept
 {}
 
 World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
+  : World()
 {
     loadNode(nodeFilePath);
     loadLink(linkFilePath);

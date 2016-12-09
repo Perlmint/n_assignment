@@ -9,7 +9,7 @@
 
 class World {
 public:
-  World() {}
+  World();
   World(World &&) noexcept;
   World(const std::string &nodeFilePath, const std::string &linkFilePath);
 
@@ -31,10 +31,10 @@ public:
 private:
   uint64_t loadDefaultInfo(SHPHandle handle);
 
-  double _minX = std::numeric_limits<double>::max();
-  double _minY = std::numeric_limits<double>::max();
-  double _maxX = std::numeric_limits<double>::min();
-  double _maxY = std::numeric_limits<double>::min();
+  double _minX;
+  double _minY;
+  double _maxX;
+  double _maxY;
 
   std::unordered_map<Point, std::unique_ptr<Node>> _nodes;
   std::unordered_multimap<Point, Path*> _pathLink;
