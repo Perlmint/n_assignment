@@ -35,11 +35,11 @@ void World::loadLink(const std::string &filePath)
         SHPObject *obj = SHPReadObject(shpHandle, i);
         auto path = new Path(obj, *this);
         _paths.emplace(path);
-        _pathLink.insert(std::make_pair(path->point1, path));
-        _pathLink.insert(std::make_pair(path->point2, path));
+        _pathLink.insert(std::make_pair(path->points.front(), path));
+        _pathLink.insert(std::make_pair(path->points.back(), path));
         SHPDestroyObject(obj);
     }
-    
+
     SHPClose(shpHandle);
 }
 
@@ -77,4 +77,9 @@ Node *World::getNode(double x, double y)
   {
     return itr->second.get();
   }
+}
+
+std::unordered_multimap<Point, Path*>::const_iterator World::getLinkedPaths(const Point &point)
+{
+  return _pathLink.find(point);
 }

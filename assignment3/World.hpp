@@ -19,6 +19,8 @@ public:
 
   friend std::ostream &operator<<(std::ostream &, const World &);
 
+  std::unordered_multimap<Point, Path*>::const_iterator getLinkedPaths(const Point &point);
+
 private:
   void loadNode(const std::string &filePath);
   void loadLink(const std::string &filePath);
@@ -30,6 +32,6 @@ private:
   double _maxY = std::numeric_limits<double>::min();
 
   std::unordered_map<Point, std::unique_ptr<Node>> _nodes;
-  std::unordered_multimap<Node*, Path*> _pathLink;
+  std::unordered_multimap<Point, Path*> _pathLink;
   std::unordered_set<std::unique_ptr<Path>> _paths;
 };
