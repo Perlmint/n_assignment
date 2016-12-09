@@ -9,7 +9,14 @@
 
 class World {
 public:
+  World() {}
+  World(World &&) noexcept;
   World(const std::string &nodeFilePath, const std::string &linkFilePath);
+
+  World &operator=(World &&) noexcept;
+
+  void loadNode(const std::string &filePath);
+  void loadLink(const std::string &filePath);
 
   uint64_t getNodeCount() const
   {
@@ -22,8 +29,6 @@ public:
   std::unordered_multimap<Point, Path*>::const_iterator getLinkedPaths(const Point &point);
 
 private:
-  void loadNode(const std::string &filePath);
-  void loadLink(const std::string &filePath);
   uint64_t loadDefaultInfo(SHPHandle handle);
 
   double _minX = std::numeric_limits<double>::max();

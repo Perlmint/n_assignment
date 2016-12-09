@@ -3,10 +3,32 @@
 #include <algorithm>
 #include "Path.hpp"
 
+World::World(World &&other) noexcept
+  : _minX(other._minX)
+  , _minY(other._minY)
+  , _maxX(other._maxX)
+  , _maxY(other._maxY)
+  , _nodes(std::move(other._nodes))
+  , _pathLink(std::move(other._pathLink))
+  , _paths(std::move(other._paths))
+{}
+
 World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
 {
     loadNode(nodeFilePath);
     loadLink(linkFilePath);
+}
+
+World &World::operator=(World &&other) noexcept
+{
+  _minX = other._minX;
+  _minY = other._minY;
+  _maxX = other._maxX;
+  _maxY = other._maxY;
+  _nodes = std::move(other._nodes);
+  _pathLink = std::move(other._pathLink);
+  _paths = std::move(other._paths);
+    return *this;
 }
 
 void World::loadNode(const std::string &filePath)
