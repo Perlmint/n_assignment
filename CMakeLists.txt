@@ -26,15 +26,17 @@ if(WIN32)
   target_compile_definitions(shapelib PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif(WIN32)
 
-add_executable(assignment3
+add_executable(assignment3 WIN32
   assignment3/main.cpp
+  assignment3/app.hpp
+  assignment3/app.cpp
   assignment3/World.cpp
   assignment3/World.hpp
   assignment3/Path.cpp
   assignment3/Path.hpp
   assignment3/point.hpp
   assignment3/Node.hpp)
-target_link_libraries(assignment3 shapelib)
+target_link_libraries(assignment3 shapelib D2d1)
 target_compile_features(assignment3 PRIVATE
   cxx_nullptr
   cxx_uniform_initialization

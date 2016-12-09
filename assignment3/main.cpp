@@ -1,19 +1,32 @@
-#include <iostream>
-#include <future>
-#include "World.hpp"
+#include <Windows.h>
+#include "app.hpp"
 
-std::future<World> loadData()
+int WINAPI WinMain(
+  HINSTANCE /* hInstance */,
+  HINSTANCE /* hPrevInstance */,
+  LPSTR /* lpCmdLine */,
+  int /* nCmdShow */
+)
 {
-  return std::async(std::launch::async, []()
+  // Use HeapSetInformation to specify that the process should
+  // terminate if the heap manager detects an error in any heap used
+  // by the process.
+  // The return value is ignored, because we want to continue running in the
+  // unlikely event that HeapSetInformation fails.
+  HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
+
+  if (SUCCEEDED(CoInitialize(NULL)))
   {
-    return World{ "./data/MOCT_NODE.shp" , "./data/MOCT_LINK.shp" };
-  });
-}
+    {
+      App app;
 
-int main(int argc, const char * argv[]) {
-  auto world = loadData();
-  world.wait();
+      if (SUCCEEDED(app.Initialize()))
+      {
+        app.RunMessageLoop();
+      }
+    }
+    CoUninitialize();
+  }
 
-  std::cout << world.get() << std::endl;
   return 0;
 }
