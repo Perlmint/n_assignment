@@ -1,7 +1,7 @@
 #pragma once
 
 #include "point.hpp"
-#include "shplib/shapefil.h"
+#include "shapefil.h"
 
 class Node {
 public:

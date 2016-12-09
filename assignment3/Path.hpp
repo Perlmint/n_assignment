@@ -2,7 +2,7 @@
 
 #include <list>
 #include "point.hpp"
-#include "shplib/shapefil.h"
+#include "shapefil.h"
 
 class Node;
 class World;

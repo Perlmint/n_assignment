@@ -1,6 +1,4 @@
 #include <iostream>
-#include <vector>
-#include "shplib/shapefil.h"
 #include "World.hpp"
 
 

@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include "Node.hpp"
 #include "Path.hpp"
-#include "shplib/shapefil.h"
+#include "shapefil.h"
 
 class World {
 public:

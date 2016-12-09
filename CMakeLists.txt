@@ -18,10 +18,10 @@ target_compile_features(assignment2 PRIVATE
   cxx_return_type_deduction)
 
 add_library(shapelib
-  assignment3/shplib/dbfopen.c
-  assignment3/shplib/safileio.c
-  assignment3/shplib/shpopen.c
-  assignment3/shplib/shptree.c)
+  shplib/dbfopen.c
+  shplib/safileio.c
+  shplib/shpopen.c
+  shplib/shptree.c)
 if(WIN32)
   target_compile_definitions(shapelib PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif(WIN32)
@@ -39,3 +39,5 @@ target_compile_features(assignment3 PRIVATE
   cxx_nullptr
   cxx_uniform_initialization
   cxx_range_for)
+target_include_directories(assignment3
+  PRIVATE shplib)
