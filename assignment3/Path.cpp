@@ -2,10 +2,16 @@
 #include "World.hpp"
 
 Path::Path(SHPObject *obj, World &world)
+  : length(0)
 {
   for (auto i = 0; i < obj->nVertices; i++)
   {
-    points.push_back(Point(obj->padfX[i], obj->padfY[i]));
+    Point newPoint{ obj->padfX[i], obj->padfY[i] };
+    if (i > 0)
+    {
+      length += points.back().distance(newPoint);
+    }
+    points.push_back(newPoint);
   }
   const auto &first = points.front();
   const auto &last = points.back();

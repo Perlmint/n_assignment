@@ -14,4 +14,5 @@ public:
     std::list<Point> points;
     Node * point1;
     Node * point2;
+    double length;
 };

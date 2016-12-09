@@ -1,4 +1,5 @@
 #pragma once
+#include <cmath>
 
 class Point {
 public:
@@ -8,6 +9,11 @@ public:
 
   bool operator==(const Point& other) const {
     return x == other.x && y == other.y;
+  }
+
+  double distance(const Point& other) const
+  {
+    return std::sqrtl(std::powl(x - other.x, 2) + std::powl(y - other.y, 2));
   }
 };
 
