@@ -33,6 +33,8 @@ World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
 
 World::~World()
 {
+  _running = false;
+  _cv.notify_all();
   for (auto &thread : _threads)
   {
     thread.join();
@@ -54,6 +56,7 @@ World &World::operator=(World &&other) noexcept
 
 void World::BeginFinders()
 {
+  _running = true;
   for (auto i = 0; i < 5; ++i)
   {
     _threads.push_back(std::thread([this]() { finder(); }));
@@ -282,7 +285,7 @@ std::future<std::vector<Path*>> World::FindPath(Node *begin, Node *end)
 
 void World::finder()
 {
-  while (true)
+  while (_running)
   {
     {
       std::unique_lock<std::mutex> lock(_cvMutex);

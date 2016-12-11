@@ -149,5 +149,6 @@ private:
   std::mutex _queueMutex;
   std::promise<std::vector<Path *>> _findPathPromise;
   std::atomic_bool _promiseIsValid = false;
+  bool _running = false;
   void finder();
 };
