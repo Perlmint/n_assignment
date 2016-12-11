@@ -594,4 +594,8 @@ void App::SetUserPoint(bool isBeginPoint)
     m_endPoint = m_clickedPoint;
     m_endPointIsValid = true;
   }
+  if (m_beginPointIsValid && m_endPointIsValid)
+  {
+    auto path = m_world.FindPath(m_world.FindNearNode(m_beginPoint), m_world.FindNearNode(m_endPoint));
+  }
 }

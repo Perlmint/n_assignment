@@ -2,6 +2,7 @@
 #include <set>
 #include <iostream>
 #include <algorithm>
+#include <queue>
 #include "Path.hpp"
 
 World::World()
@@ -166,4 +167,100 @@ PointI World::ChunkForPoint(double x, double y)
   return PointI{
     static_cast<int>(x / chunkSize),
     static_cast<int>(y / chunkSize) };
+}
+
+Node *World::FindNearNode(const PointD &point) const
+{
+  auto chunk = ChunkForPoint(point.x, point.y);
+  // TODO: find adjacent chunk...
+  return FindNearNodeInChunk(point, chunk);
+}
+
+Node *World::FindNearNodeInChunk(const PointD &point, const PointI &chunk) const
+{
+  auto distance = std::numeric_limits<double>::max();
+  Node *nearNode = nullptr;
+
+  for (const auto &node : NodesByChunk(chunk.x, chunk.y))
+  {
+    auto curDistance = node.second->point().distance(point);
+    if (curDistance < distance)
+    {
+      distance = curDistance;
+      nearNode = node.second;
+    }
+  }
+
+  return nearNode;
+}
+
+PointD World::ChunkCenter(const PointI &chunk) const
+{
+  return PointD{ (chunk.x + 0.5) * chunkSize, (chunk.y + 0.5) * chunkSize };
+}
+
+struct Estimation
+{
+  Estimation(std::vector<Path *> &_p, const Node *_n, double _e, double r)
+    : paths(_p)
+    , node(_n)
+    , estimated(_e)
+    , real(r)
+  {
+    
+  }
+  std::vector<Path *> paths;
+  const Node *node;
+  double estimated;
+  double real;
+};
+
+struct EstimationComparator
+{
+  bool operator()(const Estimation &l, const Estimation &r) const
+  {
+    return l.estimated > r.estimated;
+  }
+};
+
+std::vector<Path*> World::FindPath(Node *begin, Node *end) const
+{
+  // for fast develop... remove later
+  if (begin == nullptr || end == nullptr)
+  {
+    return{};
+  }
+
+  std::priority_queue<Estimation, std::vector<Estimation>, EstimationComparator> queue;
+  queue.push(Estimation{
+    std::vector<Path*>(),
+    begin,
+    0,
+    0
+  });
+
+  while (!queue.empty())
+  {
+    auto prev = queue.top();
+    queue.pop();
+    for (const auto &path : prev.node->linkedPaths)
+    {
+      prev.paths.push_back(path);
+      if (path->end() == end)
+      {
+        return prev.paths;
+      }
+
+      auto estimated = prev.real + path->length() + path->end()->point().distance(end->point());
+      queue.emplace(
+        prev.paths,
+        path->end(),
+        estimated,
+        prev.real + path->length()
+      );
+      prev.paths.pop_back();
+    }
+  }
+
+  return{};
 }

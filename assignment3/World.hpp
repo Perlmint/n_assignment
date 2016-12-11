@@ -86,6 +86,10 @@ public:
   IteratorRange<std::multimap<PointI, Node*>> NodesByChunk(int x, int y) const;
   IteratorRange<std::multimap<PointI, Path*>> PathsByChunk(int x, int y) const;
 
+  Node *FindNearNode(const PointD &point) const;
+  PointD ChunkCenter(const PointI &chunk) const;
+  std::vector<Path*> FindPath(Node *begin, Node *end) const;
+
 private:
   uint64_t loadDefaultInfo(SHPHandle handle);
 
@@ -102,4 +106,5 @@ private:
   std::multimap<PointI, Node*> _nodeByChunks;
   static PointI ChunkForPoint(double x, double y);
   Node *GetNodeOrCreateDummy(uint64_t id);
+  Node *FindNearNodeInChunk(const PointD &point, const PointI &chunk) const;
 };
