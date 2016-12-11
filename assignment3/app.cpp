@@ -463,6 +463,7 @@ void App::UpdateZoomLevel(short delta)
   if (prevLevel != m_zoomLevel)
   {
     UpdateRenderSize();
+    UpdateRenderArea();
     InvalidateRect(m_hwnd, nullptr, TRUE);
   }
 }
