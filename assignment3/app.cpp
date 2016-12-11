@@ -1,4 +1,5 @@
 #include <thread>
+#include <sstream>
 #include "Windowsx.h"
 
 #include "app.hpp"
@@ -188,6 +189,24 @@ HRESULT App::CreateDeviceResources()
 
       m_loadingTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
     }
+    if (SUCCEEDED(hr))
+    {
+      hr = m_pWriteFactory->CreateTextFormat(
+        L"Arial",
+        nullptr,
+        DWRITE_FONT_WEIGHT_EXTRA_BOLD,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        10,
+        L"",
+        &m_infoTextFormat);
+    }
+    if (SUCCEEDED(hr))
+    {
+      m_infoTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+
+      m_infoTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+    }
   }
 
   return hr;
@@ -231,6 +250,7 @@ HRESULT App::OnRender()
     {
       DrawNode();
       DrawPath();
+      DrawInfo();
     }
 
     hr = m_pRenderTarget->EndDraw();
@@ -277,7 +297,7 @@ LRESULT App::WndProc(
     auto pcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
     auto pDemoApp = static_cast<App *>(pcs->lpCreateParams);
 
-    ::SetWindowLongPtrW(
+    ::SetWindowLongPtr(
       hWnd,
       GWLP_USERDATA,
       PtrToUlong(pDemoApp)
@@ -288,7 +308,7 @@ LRESULT App::WndProc(
   else
   {
     auto app = reinterpret_cast<App *>(static_cast<LONG_PTR>(
-      ::GetWindowLongPtrW(
+      ::GetWindowLongPtr(
         hWnd,
         GWLP_USERDATA
       )));
@@ -436,19 +456,18 @@ void App::loadData()
   }).detach();
 }
 
+void App::DrawInfo()
+{
+  std::wstringstream stream;
+  stream << "zoom : " << m_zoomLevel << std::endl;
+  stream << "center : (" << m_center.x << ", " << m_center.y << ")" << std::endl;
+  auto infoText = stream.str();
+  m_pRenderTarget->DrawTextA(infoText.c_str(), infoText.length(),
+    m_infoTextFormat, D2D1::RectF(0, 0, 100, 100), m_pLightSlateGrayBrush);
+}
+
 void App::DrawNode()
 {
-  for (auto x = m_renderInfo.mostLeft; x <= m_renderInfo.mostRight; ++x)
-  {
-    for (auto y = m_renderInfo.mostBottom; y <= m_renderInfo.mostTop; ++y)
-    {
-      for (const auto &node : m_world.NodesByChunk(x, y))
-      {
-        DrawNode(node.second->point(), m_pCornflowerBlueBrush);
-      }
-    }
-  }
-
   if (m_beginPointIsValid)
   {
     DrawNode(m_beginPoint, m_pCrimsonBrush);
@@ -484,6 +503,8 @@ void App::DrawPath()
     ++type;
   }
 
+  std::set<const Node *> nodes;
+
   for (auto x = m_renderInfo.mostLeft; x <= m_renderInfo.mostRight; ++x)
   {
     for (auto y = m_renderInfo.mostBottom; y <= m_renderInfo.mostTop; ++y)
@@ -492,7 +513,7 @@ void App::DrawPath()
       {
         if (path.second->rank() > type)
         {
-          continue;
+          continue; 
         }
         ID2D1Brush *pen = m_pLightSlateGrayBrush;
         if (m_selectedPaths.find(path.second->id()) != m_selectedPaths.end())
@@ -500,6 +521,8 @@ void App::DrawPath()
           pen = m_pCrimsonBrush;
         }
 
+        nodes.insert(path.second->begin());
+        nodes.insert(path.second->end());
         auto pointItr = path.second->points().begin(), pointEnd = path.second->points().end();
         auto prevPoint = WorldToScreenPos(*pointItr);
         for (++pointItr; pointItr != pointEnd; ++pointItr)
@@ -516,6 +539,37 @@ void App::DrawPath()
           prevPoint = curPoint;
         }
       }
+    }
+  }
+
+  for (const auto &node : nodes)
+  {
+    DrawNode(node->point(), m_pCornflowerBlueBrush);
+    ID2D1Brush *pen = nullptr;
+    PointD point{0, 0};
+    if (node->id() == m_beginNode)
+    {
+      pen = m_pCrimsonBrush;
+      point = m_beginPoint;
+    }
+    else if (node->id() == m_endNode)
+    {
+      pen = m_pMediumOrchidBrush;
+      point = m_endPoint;
+    }
+
+    if (pen != nullptr)
+    {
+      point = WorldToScreenPos(point);
+      auto nearNode = WorldToScreenPos(node->point());
+      m_pRenderTarget->DrawLine(
+        D2D1::Point2F(
+          static_cast<float>(point.x),
+          static_cast<float>(point.y)),
+        D2D1::Point2F(
+          static_cast<float>(nearNode.x),
+          static_cast<float>(nearNode.y)),
+        pen);
     }
   }
 }

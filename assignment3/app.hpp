@@ -111,6 +111,8 @@ private:
   PointD m_center;
   double m_zoomLevel;
   std::pair<double, double> m_renderSize;
+  void DrawInfo();
+  unique_interface<IDWriteTextFormat> m_infoTextFormat;
   void DrawNode();
   void DrawNode(const PointD &worldPoint, ID2D1SolidColorBrush* pen);
   void DrawPath();
