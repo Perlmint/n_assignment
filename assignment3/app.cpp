@@ -330,6 +330,16 @@ LRESULT App::WndProc(
       }
       break;
 
+      case WM_MOUSEWHEEL:
+      {
+        if (!(wParam & (MK_CONTROL | MK_LBUTTON | MK_RBUTTON | MK_SHIFT | MK_XBUTTON1 | MK_XBUTTON2)))
+        {
+          auto wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+          app->UpdateZoomLevel(wheelDelta);
+        }
+      }
+      break;
+
       case WM_DESTROY:
       {
         PostQuitMessage(0);
@@ -412,4 +422,18 @@ Point App::WorldToScreenPos(Point worldPos) const
   return Point{
     renderTargetSize.width / 2 + x / m_renderSize.first * renderTargetSize.width,
     renderTargetSize.height / 2 + y / m_renderSize.second * renderTargetSize.height };
+}
+
+void App::UpdateZoomLevel(short delta)
+{
+  delta /= 100;
+  auto prevLevel = m_zoomLevel;
+  m_zoomLevel += delta;
+  m_zoomLevel = min(m_zoomLevel, 12);
+  m_zoomLevel = max(m_zoomLevel, 1);
+  if (prevLevel != m_zoomLevel)
+  {
+    CalcRenderSize();
+    InvalidateRect(m_hwnd, nullptr, TRUE);
+  }
 }
