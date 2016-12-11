@@ -3,19 +3,31 @@
 #include "point.hpp"
 #include "shapefil.h"
 
+class Path;
+
 class Node {
 public:
-  explicit Node(SHPObject *obj)
+  // dummy node constructor
+  explicit Node(int id)
+    : _point(0, 0)
+    , _id(id)
+    , _dummy(true)
+  {}
+  explicit Node(SHPObject *obj, int id)
     : _point(obj->dfXMin, obj->dfYMax)
-    , _id(obj->nShapeId)
+    , _id(id)
+    , _dummy(false)
   {}
 
   int id() const { return _id; }
   double x() const { return _point.x; }
   double y() const { return _point.y; }
+  bool isDummy() const { return _dummy; }
 
   const PointD &point() const { return _point; }
+  std::vector<Path *> linkedPaths;
 private:
   PointD _point;
   int _id;
+  bool _dummy;
 };
