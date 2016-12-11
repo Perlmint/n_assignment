@@ -1,4 +1,5 @@
 #include "World.hpp"
+#include <set>
 #include <iostream>
 #include <algorithm>
 #include "Path.hpp"
@@ -29,10 +30,24 @@ World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
   loadLink(linkFilePath);
   for (const auto &node : _nodes)
   {
-    auto chunkPos = std::make_pair(
-      static_cast<int>(node.first.x / chunkSize),
-      static_cast<int>(node.first.y / chunkSize));
+    auto chunkPos = ChunkForPoint(node.first.x, node.first.y);
     _nodeByChunks.insert(std::make_pair(chunkPos, node.second.get()));
+  }
+
+  std::set<std::pair<int, int>> chunks;
+  for (const auto &path : _paths)
+  {
+    chunks.clear();
+    auto itr = path->points.begin(), end = path->points.end();
+    for (; itr != end; ++itr)
+    {
+      auto curPoint = ChunkForPoint(itr->x, itr->y);
+      chunks.insert(curPoint);
+    }
+    for (const auto chunkPoint : chunks)
+    {
+      _pathByChunks.insert(std::make_pair(chunkPoint, path.get()));
+    }
   }
 }
 
@@ -131,4 +146,16 @@ IteratorRange<std::multimap<std::pair<int, int>, Node*>> World::NodesByChunk(int
   return make_iterator_range<std::multimap<std::pair<int, int>, Node*>>(
     range.first,
     range.second);
+}
+
+IteratorRange<std::multimap<std::pair<int, int>, Path*>> World::PathsByChunk(int x, int y) const
+{
+  return make_iterator_range<std::multimap<std::pair<int, int>, Path*>>(_pathByChunks.equal_range(std::make_pair(x, y)));
+}
+
+std::pair<int, int> World::ChunkForPoint(double x, double y)
+{
+  return std::make_pair(
+    static_cast<int>(x / chunkSize),
+    static_cast<int>(y / chunkSize));
 }

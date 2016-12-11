@@ -51,6 +51,13 @@ IteratorRange<T> make_iterator_range(
   return IteratorRange<T>(begin, end);
 }
 
+template<typename T>
+IteratorRange<T> make_iterator_range(
+  std::pair<typename IteratorRange<T>::iterator_type, typename IteratorRange<T>::iterator_type> rangePair)
+{
+  return IteratorRange<T>(rangePair.first, rangePair.second);
+}
+
 class World {
 public:
   World();
@@ -80,6 +87,7 @@ public:
   const static int chunkSize = 1000;
 
   IteratorRange<std::multimap<std::pair<int, int>, Node*>> NodesByChunk(int x, int y) const;
+  IteratorRange<std::multimap<std::pair<int, int>, Path*>> PathsByChunk(int x, int y) const;
 
 private:
   uint64_t loadDefaultInfo(SHPHandle handle);
@@ -96,4 +104,5 @@ private:
   // for render
   std::multimap<std::pair<int, int>, Path*> _pathByChunks;
   std::multimap<std::pair<int, int>, Node*> _nodeByChunks;
+  static std::pair<int, int> ChunkForPoint(double x, double y);
 };
