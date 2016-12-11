@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <d2d1.h>
 #include <dwrite.h>
-#include <future>
+#include <atomic>
 #include "World.hpp"
 
 template<typename T>
@@ -73,7 +73,7 @@ private:
     LPARAM lParam
   );
 
-  std::future<World> loadData();
+  void loadData();
 
 private:
   HWND m_hwnd;
@@ -81,4 +81,13 @@ private:
   unique_interface<ID2D1HwndRenderTarget> m_pRenderTarget;
   unique_interface<ID2D1SolidColorBrush> m_pLightSlateGrayBrush;
   unique_interface<ID2D1SolidColorBrush> m_pCornflowerBlueBrush;
+  unique_interface<IDWriteFactory> m_pWriteFactory;
+
+  static const UINT refreshTimerID = 1;
+  static const UINT loadingTimerID = 2;
+
+  World m_world;
+  std::atomic_bool m_loaded = false;
+  uint8_t m_loadingPeriodCount = 1;
+  unique_interface<IDWriteTextFormat> m_loadingTextFormat;
 };

@@ -1,3 +1,4 @@
+#include <thread>
 #include "app.hpp"
 
 App::App() :
@@ -68,6 +69,9 @@ HRESULT App::Initialize()
     {
       ShowWindow(m_hwnd, SW_SHOWNORMAL);
       UpdateWindow(m_hwnd);
+
+      SetTimer(m_hwnd, refreshTimerID, 100 / 60, nullptr);
+      loadData();
     }
   }
 
@@ -89,10 +93,13 @@ void App::RunMessageLoop() const
 // Initialize device-independent resources.
 HRESULT App::CreateDeviceIndependentResources()
 {
-  auto hr = S_OK;
-
-  // Create a Direct2D factory.
-  hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pDirect2dFactory);
+  auto hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pDirect2dFactory);
+  if (SUCCEEDED(hr))
+  {
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
+      __uuidof(m_pWriteFactory),
+      reinterpret_cast<IUnknown**>(&m_pWriteFactory));
+  }
 
   return hr;
 }
@@ -136,6 +143,24 @@ HRESULT App::CreateDeviceResources()
         &m_pCornflowerBlueBrush
       );
     }
+    if (SUCCEEDED(hr))
+    {
+      hr = m_pWriteFactory->CreateTextFormat(
+        L"Arial",
+        nullptr,
+        DWRITE_FONT_WEIGHT_EXTRA_BOLD,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        30,
+        L"",
+        &m_loadingTextFormat);
+    }
+    if (SUCCEEDED(hr))
+    {
+      m_loadingTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+
+      m_loadingTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+    }
   }
 
   return hr;
@@ -152,9 +177,7 @@ void App::DiscardDeviceResources()
 // Draw content.
 HRESULT App::OnRender()
 {
-  auto hr = S_OK;
-
-  hr = CreateDeviceResources();
+  auto hr = CreateDeviceResources();
 
   if (SUCCEEDED(hr))
   {
@@ -163,6 +186,23 @@ HRESULT App::OnRender()
     m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 
     m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
+
+    if (!m_loaded)
+    {
+      auto renderTargetSize = m_pRenderTarget->GetSize();
+      std::wstring str = L"Loading";
+      for (uint8_t i = 0; i < m_loadingPeriodCount; ++i)
+      {
+        str.push_back('.');
+      }
+      m_pRenderTarget->DrawText(
+        str.c_str(), str.length(),
+        m_loadingTextFormat, D2D1::RectF(0, 0, renderTargetSize.width, renderTargetSize.height),
+        m_pLightSlateGrayBrush);
+    }
+    else
+    {
+    }
 
     hr = m_pRenderTarget->EndDraw();
   }
@@ -216,15 +256,15 @@ LRESULT App::WndProc(
   }
   else
   {
-    App *pDemoApp = reinterpret_cast<App *>(static_cast<LONG_PTR>(
+    auto app = reinterpret_cast<App *>(static_cast<LONG_PTR>(
       ::GetWindowLongPtrW(
         hWnd,
         GWLP_USERDATA
       )));
 
-    bool wasHandled = false;
+    auto wasHandled = false;
 
-    if (pDemoApp)
+    if (app)
     {
       switch (message)
       {
@@ -232,7 +272,7 @@ LRESULT App::WndProc(
       {
         UINT width = LOWORD(lParam);
         UINT height = HIWORD(lParam);
-        pDemoApp->OnResize(width, height);
+        app->OnResize(width, height);
       }
       result = 0;
       wasHandled = true;
@@ -248,11 +288,26 @@ LRESULT App::WndProc(
 
       case WM_PAINT:
       {
-        pDemoApp->OnRender();
+        app->OnRender();
         ValidateRect(hWnd, nullptr);
       }
       result = 0;
       wasHandled = true;
+      break;
+
+      case WM_TIMER:
+      {
+         switch (wParam)
+         {
+         case App::refreshTimerID:
+           InvalidateRect(hWnd, nullptr, FALSE);
+           break;
+         case App::loadingTimerID:
+           app->m_loadingPeriodCount = (app->m_loadingPeriodCount + 1) % 5;
+           break;
+         default: break;
+         }
+      }
       break;
 
       case WM_DESTROY:
@@ -275,10 +330,17 @@ LRESULT App::WndProc(
   return result;
 }
 
-std::future<World> App::loadData()
+void App::loadData()
 {
-  return std::async(std::launch::async, []()
+  std::thread([this]()
   {
-    return World{ "./data/MOCT_NODE.shp" , "./data/MOCT_LINK.shp" };
-  });
+    SetTimer(m_hwnd, loadingTimerID, 300, nullptr);
+    World world{ "./data/MOCT_NODE.shp" , "./data/MOCT_LINK.shp" };
+    m_world = std::move(world);
+    m_loaded = true;
+    m_center = m_world.center();
+    m_zoomLevel = 5;
+    KillTimer(m_hwnd, loadingTimerID);
+    CalcRenderSize();
+  }).detach();
 }

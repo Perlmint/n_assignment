@@ -36,7 +36,7 @@ add_executable(assignment3 WIN32
   assignment3/Path.hpp
   assignment3/point.hpp
   assignment3/Node.hpp)
-target_link_libraries(assignment3 shapelib D2d1)
+target_link_libraries(assignment3 shapelib D2d1 Dwrite)
 target_compile_features(assignment3 PRIVATE
   cxx_nullptr
   cxx_uniform_initialization
