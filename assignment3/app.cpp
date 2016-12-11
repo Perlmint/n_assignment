@@ -1,4 +1,6 @@
 #include <thread>
+#include "Windowsx.h"
+
 #include "app.hpp"
 
 App::App() :
@@ -6,13 +8,14 @@ App::App() :
   m_pDirect2dFactory(nullptr),
   m_pRenderTarget(nullptr),
   m_pLightSlateGrayBrush(nullptr),
-  m_pCornflowerBlueBrush(nullptr)
+  m_pCornflowerBlueBrush(nullptr),
+  m_center(0, 0),
+  m_zoomLevel(0)
 {
 }
 
 App::~App()
 {
-
 }
 
 // Register the window class and call methods for instantiating drawing resources
@@ -202,6 +205,8 @@ HRESULT App::OnRender()
     }
     else
     {
+      DrawNode();
+      DrawPath();
     }
 
     hr = m_pRenderTarget->EndDraw();
@@ -228,6 +233,7 @@ void App::OnResize(
     // error here, because the error will be returned again
     // the next time EndDraw is called.
     m_pRenderTarget->Resize(D2D1::SizeU(width, height));
+    CalcRenderSize();
   }
 }
 
@@ -310,6 +316,20 @@ LRESULT App::WndProc(
       }
       break;
 
+      case WM_MOUSEMOVE:
+      {
+        // left button is down
+        // drag
+        if (wParam & MK_LBUTTON)
+        {
+          // current position
+          auto xPos = GET_X_LPARAM(lParam);
+          auto yPos = GET_Y_LPARAM(lParam);
+
+        }
+      }
+      break;
+
       case WM_DESTROY:
       {
         PostQuitMessage(0);
@@ -343,4 +363,53 @@ void App::loadData()
     KillTimer(m_hwnd, loadingTimerID);
     CalcRenderSize();
   }).detach();
+}
+
+void App::DrawNode()
+{
+  auto minX = m_center.x - m_renderSize.first / 2;
+  auto maxX = m_center.x + m_renderSize.first / 2;
+  auto minY = m_center.y - m_renderSize.second / 2;
+  auto maxY = m_center.y + m_renderSize.second / 2;
+
+  auto leftChunk = static_cast<int>(minX / World::chunkSize);
+  auto rightChunk = static_cast<int>(ceilf(maxX / World::chunkSize));
+  auto bottomChunk = static_cast<int>(minY / World::chunkSize);
+  auto topChunk = static_cast<int>(ceilf(maxY / World::chunkSize));
+  for (auto x = leftChunk; x <= rightChunk; ++x)
+  {
+    for (auto y = bottomChunk; y <= topChunk; ++y)
+    {
+      for (const auto &node : m_world.NodesByChunk(x, y))
+      {
+        auto nodeCenter = WorldToScreenPos(node.second->point());
+        m_pRenderTarget->DrawRoundedRectangle(
+          D2D1::RoundedRect(
+            D2D1::RectF(nodeCenter.x - 5, nodeCenter.y - 5, nodeCenter.x + 5, nodeCenter.y + 5),
+            3, 3), m_pCornflowerBlueBrush);
+      }
+    }
+  }
+}
+
+void App::DrawPath()
+{
+  
+}
+
+void App::CalcRenderSize()
+{
+  auto renderTargetSize = m_pRenderTarget->GetSize();
+  auto ratio = World::chunkSize / mapRatio * m_zoomLevel;
+  m_renderSize = std::make_pair(ratio * renderTargetSize.width, ratio * renderTargetSize.height);
+}
+
+Point App::WorldToScreenPos(Point worldPos) const
+{
+  auto renderTargetSize = m_pRenderTarget->GetSize();
+  auto x = worldPos.x - m_center.x;
+  auto y = worldPos.y - m_center.y;
+  return Point{
+    renderTargetSize.width / 2 + x / m_renderSize.first * renderTargetSize.width,
+    renderTargetSize.height / 2 + y / m_renderSize.second * renderTargetSize.height };
 }

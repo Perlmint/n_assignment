@@ -90,4 +90,13 @@ private:
   std::atomic_bool m_loaded = false;
   uint8_t m_loadingPeriodCount = 1;
   unique_interface<IDWriteTextFormat> m_loadingTextFormat;
+
+  static const int mapRatio= 30;
+  Point m_center;
+  uint8_t m_zoomLevel;
+  std::pair<double, double> m_renderSize;
+  void DrawNode();
+  void DrawPath();
+  void CalcRenderSize();
+  Point WorldToScreenPos(Point worldPos) const;
 };
