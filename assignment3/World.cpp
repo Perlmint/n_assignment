@@ -25,8 +25,8 @@ World::World(World &&other) noexcept
 World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
   : World()
 {
-    loadNode(nodeFilePath);
-    //loadLink(linkFilePath);
+  loadNode(nodeFilePath);
+  loadLink(linkFilePath);
   for (const auto &node : _nodes)
   {
     auto chunkPos = std::make_pair(
@@ -52,55 +52,55 @@ World &World::operator=(World &&other) noexcept
 
 void World::loadNode(const std::string &filePath)
 {
-    auto shpHandle = SHPOpen(filePath.c_str(), "rb");
-    
-    auto entityCount = loadDefaultInfo(shpHandle);
-    
-    for (int32_t i = 0; i < entityCount; i++) {
-        SHPObject *obj = SHPReadObject(shpHandle, i);
-        auto node = new Node(obj);
-        _nodes.emplace(node->point(), node);
-        SHPDestroyObject(obj);
-    }
-    
-    SHPClose(shpHandle);
+  auto shpHandle = SHPOpen(filePath.c_str(), "rb");
+
+  auto entityCount = loadDefaultInfo(shpHandle);
+
+  for (auto i = 0; i < entityCount; i++) {
+    auto obj = SHPReadObject(shpHandle, i);
+    auto node = new Node(obj);
+    _nodes.emplace(node->point(), node);
+    SHPDestroyObject(obj);
+  }
+
+  SHPClose(shpHandle);
 }
 
 void World::loadLink(const std::string &filePath)
 {
-    auto shpHandle = SHPOpen(filePath.c_str(), "rb");
-    
-    auto entityCount = loadDefaultInfo(shpHandle);
-    
-    for (int32_t i = 0; i < entityCount; i++) {
-        SHPObject *obj = SHPReadObject(shpHandle, i);
-        auto path = new Path(obj, *this);
-        _paths.emplace(path);
-        _pathLink.insert(std::make_pair(path->points.front(), path));
-        _pathLink.insert(std::make_pair(path->points.back(), path));
-        SHPDestroyObject(obj);  
-    }
+  auto shpHandle = SHPOpen(filePath.c_str(), "rb");
 
-    SHPClose(shpHandle);
+  auto entityCount = loadDefaultInfo(shpHandle);
+
+  for (auto i = 0; i < entityCount; i++) {
+    auto obj = SHPReadObject(shpHandle, i);
+    auto path = new Path(obj, *this);
+    _paths.emplace(path);
+    _pathLink.insert(std::make_pair(path->points.front(), path));
+    _pathLink.insert(std::make_pair(path->points.back(), path));
+    SHPDestroyObject(obj);
+  }
+
+  SHPClose(shpHandle);
 }
 
 uint64_t World::loadDefaultInfo(SHPHandle handle)
 {
-    int32_t entityCount = -1, shapeType = -1;
-    double minimumBound[4], maximumBound[4];
-    
-    SHPGetInfo(handle, &entityCount, &shapeType, minimumBound, maximumBound);
-    _minX = std::min(_minX, minimumBound[0]);
-    _maxX = std::max(_maxX, maximumBound[0]);
-    _minY = std::min(_minY, minimumBound[1]);
-    _maxY = std::max(_maxY, maximumBound[1]);
-    
-    return entityCount;
+  auto entityCount = -1, shapeType = -1;
+  double minimumBound[4], maximumBound[4];
+
+  SHPGetInfo(handle, &entityCount, &shapeType, minimumBound, maximumBound);
+  _minX = std::min(_minX, minimumBound[0]);
+  _maxX = std::max(_maxX, maximumBound[0]);
+  _minY = std::min(_minY, minimumBound[1]);
+  _maxY = std::max(_maxY, maximumBound[1]);
+
+  return entityCount;
 }
 
 std::ostream &operator<<(std::ostream &s, const World &w)
 {
-    return s << "[World" << std::endl
+  return s << "[World" << std::endl
     << "  x: " << w._minX << " ~ " << w._maxX << std::endl
     << "  y: " << w._minY << " ~ " << w._maxY << std::endl
     << "  nodes count: " << w._nodes.size() << std::endl
