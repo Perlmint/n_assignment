@@ -3,6 +3,8 @@
 
 #include "app.hpp"
 
+const int App::zoomForRoadRank[] = { 100, 80, 60, 50, 40, 30 };
+
 App::App() :
   m_hwnd(nullptr),
   m_pDirect2dFactory(nullptr),
@@ -402,12 +404,27 @@ void App::DrawNode()
 
 void App::DrawPath()
 {
+  auto type = 101;
+  for (const auto & zoom : zoomForRoadRank)
+  {
+    if (zoom < m_zoomLevel)
+    {
+      break;
+    }
+    ++type;
+  }
+
   for (auto x = m_renderInfo.mostLeft; x <= m_renderInfo.mostRight; ++x)
   {
     for (auto y = m_renderInfo.mostBottom; y <= m_renderInfo.mostTop; ++y)
     {
       for (const auto &path : m_world.PathsByChunk(x, y))
       {
+        if (path.second->rank() > type)
+        {
+          continue;
+        }
+
         auto pointItr = path.second->points().begin(), pointEnd = path.second->points().end();
         auto prevPoint = WorldToScreenPos(*pointItr);
         for (++pointItr; pointItr != pointEnd; ++pointItr)
