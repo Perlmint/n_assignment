@@ -377,6 +377,7 @@ void App::loadData()
     m_zoomLevel = 5;
     KillTimer(m_hwnd, loadingTimerID);
     UpdateRenderSize();
+    UpdateRenderArea();
   }).detach();
 }
 
