@@ -73,11 +73,8 @@ public:
   {
     return _nodes.size();
   }
-  Node *getNode(double x, double y);
 
   friend std::ostream &operator<<(std::ostream &, const World &);
-
-  std::unordered_multimap<PointD, Path*>::const_iterator getLinkedPaths(const PointD &point);
 
   PointD center() const
   {
