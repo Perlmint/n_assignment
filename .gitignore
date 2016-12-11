@@ -30,6 +30,7 @@
 
 Debug/
 x64/
+Win32/
 *.opendb
 *.db
 
