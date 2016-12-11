@@ -13,7 +13,11 @@ public:
 
   double length() const { return _length; }
   const std::vector<PointD> &points() const { return _points; }
+  int id() const { return _id; }
+  int rank() const { return _rank; }
 private:
+  int _id;
+  int _rank;
   std::vector<PointD> _points;
   double _length;
 };
