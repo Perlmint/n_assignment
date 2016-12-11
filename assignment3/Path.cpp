@@ -1,9 +1,11 @@
 #include "Path.hpp"
 #include "World.hpp"
 
-Path::Path(SHPObject *obj, World &world)
-  : _id(obj->nShapeId)
-  , _rank(0)
+Path::Path(SHPObject *obj, World &world, int id, int rank, Node *begin, Node *end)
+  : _id(id)
+  , _rank(rank)
+  , _begin(begin)
+  , _end(end)
   , _length(0)
 {
   for (auto i = 0; i < obj->nVertices; i++)

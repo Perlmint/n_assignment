@@ -17,7 +17,6 @@ World::World(World &&other) noexcept
   , _maxX(other._maxX)
   , _maxY(other._maxY)
   , _nodes(std::move(other._nodes))
-  , _pathLink(std::move(other._pathLink))
   , _paths(std::move(other._paths))
   , _pathByChunks(std::move(other._pathByChunks))
   , _nodeByChunks(std::move(other._nodeByChunks))
@@ -28,26 +27,6 @@ World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
 {
   loadNode(nodeFilePath);
   loadLink(linkFilePath);
-  for (const auto &node : _nodes)
-  {
-    auto chunkPos = ChunkForPoint(node.first.x, node.first.y);
-    _nodeByChunks.insert(std::make_pair(chunkPos, node.second.get()));
-  }
-
-  std::set<PointI> chunks;
-  for (const auto &path : _paths)
-  {
-    chunks.clear();
-    for (const auto &point : path->points())
-    {
-      auto curPoint = ChunkForPoint(point.x, point.y);
-      chunks.insert(curPoint);
-    }
-    for (const auto chunkPoint : chunks)
-    {
-      _pathByChunks.insert(std::make_pair(chunkPoint, path.get()));
-    }
-  }
 }
 
 World &World::operator=(World &&other) noexcept
@@ -57,7 +36,6 @@ World &World::operator=(World &&other) noexcept
   _maxX = other._maxX;
   _maxY = other._maxY;
   _nodes = std::move(other._nodes);
-  _pathLink = std::move(other._pathLink);
   _paths = std::move(other._paths);
   _nodeByChunks = std::move(other._nodeByChunks);
   _pathByChunks = std::move(other._pathByChunks);
@@ -66,15 +44,23 @@ World &World::operator=(World &&other) noexcept
 
 void World::loadNode(const std::string &filePath)
 {
+  auto dbfPath = filePath;
+  dbfPath.replace(dbfPath.length() - 3, 3, "dbf");
+  auto dbfHandle = DBFOpen(dbfPath.c_str(), "rb");
   auto shpHandle = SHPOpen(filePath.c_str(), "rb");
 
+  auto nodeIdIndex = DBFGetFieldIndex(dbfHandle, "NODE_ID");
   auto entityCount = loadDefaultInfo(shpHandle);
 
   for (auto i = 0; i < entityCount; i++) {
     auto obj = SHPReadObject(shpHandle, i);
-    auto node = new Node(obj);
-    _nodes.emplace(node->point(), node);
+    auto nodeIdStr = DBFReadStringAttribute(dbfHandle, i, nodeIdIndex);
+    auto nodeId = atoi(nodeIdStr);
+    auto node = new Node(obj, nodeId);
+    _nodes.emplace(node->id(), node);
     SHPDestroyObject(obj);
+    auto chunkPos = ChunkForPoint(node->x(), node->y());
+    _nodeByChunks.insert(std::make_pair(chunkPos, node));
   }
 
   SHPClose(shpHandle);
@@ -82,20 +68,61 @@ void World::loadNode(const std::string &filePath)
 
 void World::loadLink(const std::string &filePath)
 {
+  auto dbfPath = filePath;
+  dbfPath.replace(dbfPath.length() - 3, 3, "dbf");
+  auto dbfHandle = DBFOpen(dbfPath.c_str(), "rb");
   auto shpHandle = SHPOpen(filePath.c_str(), "rb");
+
+  auto linkIdIndex = DBFGetFieldIndex(dbfHandle, "LINK_ID");
+  auto roadRankIndex = DBFGetFieldIndex(dbfHandle, "ROAD_RANK");
+  auto beginNodeIndex = DBFGetFieldIndex(dbfHandle, "F_NODE");
+  auto endNodeIndex = DBFGetFieldIndex(dbfHandle, "T_NODE");
 
   auto entityCount = loadDefaultInfo(shpHandle);
 
+  std::set<PointI> chunks;
   for (auto i = 0; i < entityCount; i++) {
     auto obj = SHPReadObject(shpHandle, i);
-    auto path = new Path(obj, *this);
-    _paths.emplace(path);
-    _pathLink.insert(std::make_pair(path->points().front(), path));
-    _pathLink.insert(std::make_pair(path->points().back(), path));
+    auto rankStr = DBFReadStringAttribute(dbfHandle, i, roadRankIndex);
+    auto rank = atoi(rankStr);
+    auto beginNodeIdStr = DBFReadStringAttribute(dbfHandle, i, beginNodeIndex);
+    auto beginNodeId = atoi(beginNodeIdStr);
+    auto endNodeIdStr = DBFReadStringAttribute(dbfHandle, i, endNodeIndex);
+    auto endNodeId = atoi(endNodeIdStr);
+    auto linkIdStr = DBFReadStringAttribute(dbfHandle, i, linkIdIndex);
+    auto linkId = atoi(linkIdStr);
+    auto beginNode = GetNodeOrCreateDummy(beginNodeId);
+    auto path = new Path(obj, *this, linkId, rank,
+      beginNode,
+      GetNodeOrCreateDummy(endNodeId));
+    beginNode->linkedPaths.push_back(path);
+    _paths.emplace(path->id(), path);
     SHPDestroyObject(obj);
+
+    chunks.clear();
+    for (const auto &point : path->points())
+    {
+      auto curPoint = ChunkForPoint(point.x, point.y);
+      chunks.insert(curPoint);
+    }
+    for (const auto chunkPoint : chunks)
+    {
+      _pathByChunks.insert(std::make_pair(chunkPoint, path));
+    }
   }
 
+  DBFClose(dbfHandle);
   SHPClose(shpHandle);
+}
+
+Node *World::GetNodeOrCreateDummy(int id)
+{
+  auto itr = _nodes.find(id);
+  if (itr == _nodes.end()) {
+    return _nodes.emplace(id, new Node{id}).first->second.get();
+  }
+
+  return itr->second.get();
 }
 
 uint64_t World::loadDefaultInfo(SHPHandle handle)
@@ -119,24 +146,6 @@ std::ostream &operator<<(std::ostream &s, const World &w)
     << "  y: " << w._minY << " ~ " << w._maxY << std::endl
     << "  nodes count: " << w._nodes.size() << std::endl
     << "]";
-}
-
-Node *World::getNode(double x, double y)
-{
-  auto itr = _nodes.find(PointD(x, y));
-  if (itr == _nodes.end())
-  {
-    return nullptr;
-  }
-  else
-  {
-    return itr->second.get();
-  }
-}
-
-std::unordered_multimap<PointD, Path*>::const_iterator World::getLinkedPaths(const PointD &point)
-{
-  return _pathLink.find(point);
 }
 
 IteratorRange<std::multimap<PointI, Node*>> World::NodesByChunk(int x, int y) const
