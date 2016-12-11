@@ -18,13 +18,22 @@ World::World(World &&other) noexcept
   , _nodes(std::move(other._nodes))
   , _pathLink(std::move(other._pathLink))
   , _paths(std::move(other._paths))
+  , _pathByChunks(std::move(other._pathByChunks))
+  , _nodeByChunks(std::move(other._nodeByChunks))
 {}
 
 World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
   : World()
 {
     loadNode(nodeFilePath);
-    loadLink(linkFilePath);
+    //loadLink(linkFilePath);
+  for (const auto &node : _nodes)
+  {
+    auto chunkPos = std::make_pair(
+      static_cast<int>(node.first.x / chunkSize),
+      static_cast<int>(node.first.y / chunkSize));
+    _nodeByChunks.insert(std::make_pair(chunkPos, node.second.get()));
+  }
 }
 
 World &World::operator=(World &&other) noexcept
@@ -36,7 +45,9 @@ World &World::operator=(World &&other) noexcept
   _nodes = std::move(other._nodes);
   _pathLink = std::move(other._pathLink);
   _paths = std::move(other._paths);
-    return *this;
+  _nodeByChunks = std::move(other._nodeByChunks);
+  _pathByChunks = std::move(other._pathByChunks);
+  return *this;
 }
 
 void World::loadNode(const std::string &filePath)
@@ -67,7 +78,7 @@ void World::loadLink(const std::string &filePath)
         _paths.emplace(path);
         _pathLink.insert(std::make_pair(path->points.front(), path));
         _pathLink.insert(std::make_pair(path->points.back(), path));
-        SHPDestroyObject(obj);
+        SHPDestroyObject(obj);  
     }
 
     SHPClose(shpHandle);
@@ -112,4 +123,12 @@ Node *World::getNode(double x, double y)
 std::unordered_multimap<Point, Path*>::const_iterator World::getLinkedPaths(const Point &point)
 {
   return _pathLink.find(point);
+}
+
+IteratorRange<std::multimap<std::pair<int, int>, Node*>> World::NodesByChunk(int x, int y) const
+{
+  auto range = _nodeByChunks.equal_range(std::make_pair(x, y));
+  return make_iterator_range<std::multimap<std::pair<int, int>, Node*>>(
+    range.first,
+    range.second);
 }
