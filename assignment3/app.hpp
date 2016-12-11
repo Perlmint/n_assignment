@@ -81,10 +81,14 @@ private:
   unique_interface<ID2D1HwndRenderTarget> m_pRenderTarget;
   unique_interface<ID2D1SolidColorBrush> m_pLightSlateGrayBrush;
   unique_interface<ID2D1SolidColorBrush> m_pCornflowerBlueBrush;
+  unique_interface<ID2D1SolidColorBrush> m_pCrimsonBrush;
+  unique_interface<ID2D1SolidColorBrush> m_pMediumOrchidBrush;
   unique_interface<IDWriteFactory> m_pWriteFactory;
 
   static const UINT refreshTimerID = 1;
   static const UINT loadingTimerID = 2;
+  static const UINT ID_MENU_BEGIN_POINT = 3;
+  static const UINT ID_MENU_END_POINT = 4;
 
   World m_world;
   std::atomic_bool m_loaded = false;
@@ -106,12 +110,22 @@ private:
   double m_zoomLevel;
   std::pair<double, double> m_renderSize;
   void DrawNode();
+  void DrawNode(const PointD &worldPoint, ID2D1SolidColorBrush* pen);
   void DrawPath();
   void UpdateRenderSize();
   void UpdateRenderArea();
   PointD WorldToScreenPos(PointD worldPos) const;
+  PointD ScreenToWorld(PointD screenPos) const;
   void UpdateZoomLevel(short delta);
 
   std::pair<int, int> m_prevMousePos;
   void UpdateCenter(int x, int y, bool down);
+
+  PointD m_clickedPoint;
+  PointD m_beginPoint;
+  bool m_beginPointIsValid = false;
+  PointD m_endPoint;
+  bool m_endPointIsValid = false;
+  void SetMenuOpenedPoint(double x, double y);
+  void SetUserPoint(bool isBeginPoint);
 };

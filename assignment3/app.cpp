@@ -5,14 +5,17 @@
 
 const int App::zoomForRoadRank[] = { 100, 80, 60, 50, 40, 30 };
 
-App::App() :
-  m_hwnd(nullptr),
-  m_pDirect2dFactory(nullptr),
-  m_pRenderTarget(nullptr),
-  m_pLightSlateGrayBrush(nullptr),
-  m_pCornflowerBlueBrush(nullptr),
-  m_center(0, 0),
-  m_zoomLevel(0)
+App::App()
+  : m_hwnd(nullptr)
+  , m_pDirect2dFactory(nullptr)
+  , m_pRenderTarget(nullptr)
+  , m_pLightSlateGrayBrush(nullptr)
+  , m_pCornflowerBlueBrush(nullptr)
+  , m_center(0, 0)
+  , m_zoomLevel(0)
+  , m_clickedPoint(0, 0)
+  , m_beginPoint(0, 0)
+  , m_endPoint(0, 0)
 {
 }
 
@@ -146,6 +149,22 @@ HRESULT App::CreateDeviceResources()
       hr = m_pRenderTarget->CreateSolidColorBrush(
         D2D1::ColorF(D2D1::ColorF::CornflowerBlue),
         &m_pCornflowerBlueBrush
+      );
+    }
+    if (SUCCEEDED(hr))
+    {
+      // Create a blue brush.
+      hr = m_pRenderTarget->CreateSolidColorBrush(
+        D2D1::ColorF(D2D1::ColorF::Crimson),
+        &m_pCrimsonBrush
+      );
+    }
+    if (SUCCEEDED(hr))
+    {
+      // Create a blue brush.
+      hr = m_pRenderTarget->CreateSolidColorBrush(
+        D2D1::ColorF(D2D1::ColorF::MediumOrchid),
+        &m_pMediumOrchidBrush
       );
     }
     if (SUCCEEDED(hr))
@@ -318,6 +337,24 @@ LRESULT App::WndProc(
          }
       }
       break;
+      case WM_RBUTTONUP:
+      {
+        if (app->m_loaded)
+        {
+          auto hPopupMenu = CreatePopupMenu();
+          InsertMenu(hPopupMenu, 0, MF_BYPOSITION | MF_STRING, ID_MENU_BEGIN_POINT, "출발지점");
+          InsertMenu(hPopupMenu, 0, MF_BYPOSITION | MF_STRING, ID_MENU_END_POINT, "도착지점");
+          SetForegroundWindow(hWnd);
+          POINT point = {
+            GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)
+          };
+          app->SetMenuOpenedPoint(point.x, point.y);
+          ClientToScreen(hWnd, &point);
+          TrackPopupMenu(hPopupMenu, TPM_TOPALIGN | TPM_LEFTALIGN, point.x, point.y, 0, hWnd, nullptr);
+        }
+      }
+      break;
+
       case WM_LBUTTONDOWN:
       {
         app->UpdateCenter(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), true);
@@ -352,6 +389,20 @@ LRESULT App::WndProc(
       result = 1;
       wasHandled = true;
       break;
+
+      case WM_COMMAND:
+      {
+        if (wParam == ID_MENU_BEGIN_POINT)
+        {
+          app->SetUserPoint(true);
+        }
+        else if (wParam == ID_MENU_END_POINT)
+        {
+          app->SetUserPoint(false);
+        }
+      }
+      break;
+
       default: break;
       }
     }
@@ -389,18 +440,32 @@ void App::DrawNode()
     {
       for (const auto &node : m_world.NodesByChunk(x, y))
       {
-        auto nodeCenter = WorldToScreenPos(node.second->point());
-        m_pRenderTarget->DrawRoundedRectangle(
-          D2D1::RoundedRect(
-            D2D1::RectF(
-              static_cast<float>(nodeCenter.x - 2),
-              static_cast<float>(nodeCenter.y - 2),
-              static_cast<float>(nodeCenter.x + 2),
-              static_cast<float>(nodeCenter.y + 2)),
-            3, 3), m_pCornflowerBlueBrush);
+        DrawNode(node.second->point(), m_pCornflowerBlueBrush);
       }
     }
   }
+
+  if (m_beginPointIsValid)
+  {
+    DrawNode(m_beginPoint, m_pCrimsonBrush);
+  }
+  if (m_endPointIsValid)
+  {
+    DrawNode(m_endPoint, m_pMediumOrchidBrush);
+  }
+}
+
+void App::DrawNode(const PointD &worldPoint, ID2D1SolidColorBrush* pen)
+{
+  auto nodeCenter = WorldToScreenPos(worldPoint);
+  m_pRenderTarget->DrawRoundedRectangle(
+    D2D1::RoundedRect(
+      D2D1::RectF(
+        static_cast<float>(nodeCenter.x - 2),
+        static_cast<float>(nodeCenter.y - 2),
+        static_cast<float>(nodeCenter.x + 2),
+        static_cast<float>(nodeCenter.y + 2)),
+      3, 3), pen);
 }
 
 void App::DrawPath()
@@ -471,6 +536,16 @@ PointD App::WorldToScreenPos(PointD worldPos) const
     renderTargetSize.height / 2 + y / m_renderSize.second * renderTargetSize.height };
 }
 
+PointD App::ScreenToWorld(PointD screenPos) const
+{
+  auto renderTargetSize = m_pRenderTarget->GetSize();
+  auto x = screenPos.x - renderTargetSize.width / 2;
+  auto y = screenPos.y - renderTargetSize.height / 2;
+  return PointD{
+    m_center.x + x / renderTargetSize.width * m_renderSize.first,
+    m_center.y + y / renderTargetSize.height * m_renderSize.second };
+}
+
 void App::UpdateZoomLevel(short delta)
 {
   delta /= 100;
@@ -500,4 +575,23 @@ void App::UpdateCenter(int x, int y, bool down)
   }
   m_prevMousePos.first = x;
   m_prevMousePos.second = y;
+}
+
+void App::SetMenuOpenedPoint(double x, double y)
+{
+  m_clickedPoint = ScreenToWorld(PointD{ x, y });
+}
+
+void App::SetUserPoint(bool isBeginPoint)
+{
+  if (isBeginPoint)
+  {
+    m_beginPoint = m_clickedPoint;
+    m_beginPointIsValid = true;
+  }
+  else
+  {
+    m_endPoint = m_clickedPoint;
+    m_endPointIsValid = true;
+  }
 }
