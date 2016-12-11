@@ -432,6 +432,7 @@ void App::loadData()
     KillTimer(m_hwnd, ID_TIMER_LOADING_UPDATE);
     UpdateRenderSize();
     UpdateRenderArea();
+    m_world.BeginFinders();
   }).detach();
 }
 
@@ -609,12 +610,7 @@ void App::SetUserPoint(bool isBeginPoint)
   }
   if (m_beginPointIsValid && m_endPointIsValid)
   {
-    if (m_pathFindingThread != nullptr)
-    {
-      TerminateThread(m_pathFindingThread, 2);
-    }
-
-    auto thread = std::thread([this]() {
+    std::thread([this]() {
       m_selectedPaths.clear();
       m_beginNode = 0;
       m_endNode = 0;
@@ -624,9 +620,8 @@ void App::SetUserPoint(bool isBeginPoint)
       auto endNode = m_world.FindNearNode(m_endPoint);
       auto paths = m_world.FindPath(beginNode, endNode);
 
-      if (!paths.empty())
-      {
-        for (const auto &path : paths)
+      try {
+        for (const auto &path : paths.get())
         {
           m_selectedPaths.insert(path->id());
         }
@@ -634,9 +629,10 @@ void App::SetUserPoint(bool isBeginPoint)
         m_endNode = endNode->id();
         InvalidateRect(m_hwnd, nullptr, true);
       }
-      m_pathFindingThread = nullptr;
-    });
-    m_pathFindingThread = thread.native_handle();
-    thread.detach();
+      catch (const std::exception &e)
+      {
+        // Do nothing
+      }
+    }).detach();
   }
 }

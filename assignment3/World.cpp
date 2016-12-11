@@ -10,7 +10,8 @@ World::World()
   , _minY(std::numeric_limits<double>::max())
   , _maxX(std::numeric_limits<double>::min())
   , _maxY(std::numeric_limits<double>::min())
-{}
+{
+}
 
 World::World(World &&other) noexcept
   : _minX(other._minX)
@@ -30,6 +31,14 @@ World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
   loadLink(linkFilePath);
 }
 
+World::~World()
+{
+  for (auto &thread : _threads)
+  {
+    thread.join();
+  }
+}
+
 World &World::operator=(World &&other) noexcept
 {
   _minX = other._minX;
@@ -42,6 +51,15 @@ World &World::operator=(World &&other) noexcept
   _pathByChunks = std::move(other._pathByChunks);
   return *this;
 }
+
+void World::BeginFinders()
+{
+  for (auto i = 0; i < 5; ++i)
+  {
+    _threads.push_back(std::thread([this]() { finder(); }));
+  }
+}
+
 
 void World::loadNode(const std::string &filePath)
 {
@@ -169,11 +187,42 @@ PointI World::ChunkForPoint(double x, double y)
     static_cast<int>(y / chunkSize) };
 }
 
+using FindNearInfo = std::pair<PointI, double>;
+
+struct FindNearComparator
+{
+  bool operator()(const FindNearInfo &l, const FindNearInfo &r) const
+  {
+    return l.second > r.second;
+  }
+  static FindNearInfo FindNearInfo(const PointI &chunk, const PointD &point)
+  {
+    return std::make_pair(chunk, point.distance(World::ChunkCenter(chunk)));
+  }
+};
+
 Node *World::FindNearNode(const PointD &point) const
 {
-  auto chunk = ChunkForPoint(point.x, point.y);
-  // TODO: find adjacent chunk...
-  return FindNearNodeInChunk(point, chunk);
+  Node *node = nullptr;
+  std::priority_queue<FindNearInfo, std::vector<FindNearInfo>, FindNearComparator> chunkQueue;
+  auto beginChunk = ChunkForPoint(point.x, point.y);
+  chunkQueue.push(FindNearComparator::FindNearInfo(beginChunk, point));
+  chunkQueue.push(FindNearComparator::FindNearInfo(PointI{ beginChunk.x - 1, beginChunk.y }, point));
+  chunkQueue.push(FindNearComparator::FindNearInfo(PointI{ beginChunk.x + 1, beginChunk.y }, point));
+  chunkQueue.push(FindNearComparator::FindNearInfo(PointI{ beginChunk.x, beginChunk.y - 1 }, point));
+  chunkQueue.push(FindNearComparator::FindNearInfo(PointI{ beginChunk.x, beginChunk.y + 1 }, point));
+  while (!chunkQueue.empty())
+  {
+    auto chunk = chunkQueue.top();
+    chunkQueue.pop();
+    node = FindNearNodeInChunk(point, chunk.first);
+    if (node != nullptr && node->point().distance(point) < chunkSize / 3)
+    {
+      break;
+    }
+  }
+
+  return node;
 }
 
 Node *World::FindNearNodeInChunk(const PointD &point, const PointI &chunk) const
@@ -194,36 +243,12 @@ Node *World::FindNearNodeInChunk(const PointD &point, const PointI &chunk) const
   return nearNode;
 }
 
-PointD World::ChunkCenter(const PointI &chunk) const
+PointD World::ChunkCenter(const PointI &chunk)
 {
   return PointD{ (chunk.x + 0.5) * chunkSize, (chunk.y + 0.5) * chunkSize };
 }
 
-struct Estimation
-{
-  Estimation(std::vector<Path *> _p, const Node *_n, double _e, double r)
-    : paths(_p)
-    , node(_n)
-    , estimated(_e)
-    , real(r)
-  {
-    
-  }
-  std::vector<Path *> paths;
-  const Node *node;
-  double estimated;
-  double real;
-};
-
-struct EstimationComparator
-{
-  bool operator()(const Estimation &l, const Estimation &r) const
-  {
-    return l.estimated > r.estimated;
-  }
-};
-
-std::vector<Path*> World::FindPath(Node *begin, Node *end) const
+std::future<std::vector<Path*>> World::FindPath(Node *begin, Node *end)
 {
   // for fast develop... remove later
   if (begin == nullptr || end == nullptr)
@@ -231,41 +256,82 @@ std::vector<Path*> World::FindPath(Node *begin, Node *end) const
     return{};
   }
 
-  auto estimationLimit = begin->point().distance(end->point()) * 10;
-
-  std::priority_queue<Estimation, std::vector<Estimation>, EstimationComparator> queue;
-  queue.push(Estimation{
+  _queueMutex.lock();
+  if (_promiseIsValid)
+  {
+    _findPathPromise.set_exception(std::make_exception_ptr(std::runtime_error("Stopped")));
+  }
+  _findPathPromise = std::promise<std::vector<Path*>>();
+  _promiseIsValid = true;
+  while (!_queue.empty())
+  {
+    _queue.pop();
+  }
+  _queue.push(World::Estimation{
     std::vector<Path*>(),
     begin,
+    end,
     0,
     0
   });
+  _queueMutex.unlock();
+  _cv.notify_one();
 
-  while (!queue.empty())
+  return _findPathPromise.get_future();
+}
+
+void World::finder()
+{
+  while (true)
   {
-    auto prev = queue.top();
-    queue.pop();
+    {
+      std::unique_lock<std::mutex> lock(_cvMutex);
+      _cv.wait(lock);
+    }
+
+    Estimation prev;
+    {
+      std::unique_lock<std::mutex> queueLock(_queueMutex);
+      if (_queue.empty())
+      {
+        continue;
+      }
+      prev = _queue.top();
+      _queue.pop();
+    }
+
     for (const auto &path : prev.node->linkedPaths)
     {
       prev.paths.push_back(path);
-      if (path->end() == end)
+      if (path->end() == prev.target)
       {
-        return prev.paths;
+        if (_promiseIsValid)
+        {
+          _promiseIsValid = false;
+          _findPathPromise.set_value(prev.paths);
+          std::unique_lock<std::mutex> queueLock(_queueMutex);
+          while (!_queue.empty())
+          {
+            _queue.pop();
+          }
+        }
+        break;
       }
 
-      auto estimated = prev.real + path->length() + path->end()->point().distance(end->point());
-      if (estimated <= estimationLimit)
+      auto estimated = prev.real + path->length() + path->end()->point().distance(prev.target->point());
       {
-        queue.emplace(
+        std::unique_lock<std::mutex> queueLock(_queueMutex);
+        _queue.emplace(
           prev.paths,
           path->end(),
+          prev.target,
           estimated,
           prev.real + path->length()
         );
       }
+      _cv.notify_one();
+
       prev.paths.pop_back();
     }
   }
-
-  return{};
 }

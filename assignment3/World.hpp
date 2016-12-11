@@ -1,12 +1,15 @@
 #pragma once
 
 #include <memory>
-#include <unordered_set>
 #include <unordered_map>
 #include <map>
 #include "Node.hpp"
 #include "Path.hpp"
 #include "shapefil.h"
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <future>
 
 namespace std
 {
@@ -63,6 +66,7 @@ public:
   World();
   World(World &&) noexcept;
   World(const std::string &nodeFilePath, const std::string &linkFilePath);
+  ~World();
 
   World &operator=(World &&) noexcept;
 
@@ -87,8 +91,9 @@ public:
   IteratorRange<std::multimap<PointI, Path*>> PathsByChunk(int x, int y) const;
 
   Node *FindNearNode(const PointD &point) const;
-  PointD ChunkCenter(const PointI &chunk) const;
-  std::vector<Path*> FindPath(Node *begin, Node *end) const;
+  static PointD ChunkCenter(const PointI &chunk);
+  std::future<std::vector<Path*>> FindPath(Node *begin, Node *end);
+  void BeginFinders();
 
 private:
   uint64_t loadDefaultInfo(SHPHandle handle);
@@ -107,4 +112,42 @@ private:
   static PointI ChunkForPoint(double x, double y);
   Node *GetNodeOrCreateDummy(uint64_t id);
   Node *FindNearNodeInChunk(const PointD &point, const PointI &chunk) const;
+
+  struct Estimation
+  {
+    Estimation(): node(nullptr), target(nullptr), estimated(0), real(0)
+    {
+    }
+
+    Estimation(std::vector<Path *> _p, const Node *_n, const Node *_t, double _e, double r)
+      : paths(_p)
+      , node(_n)
+      , target(_t)
+      , estimated(_e)
+      , real(r)
+    {}
+
+    std::vector<Path *> paths;
+    const Node *node;
+    const Node *target;
+    double estimated;
+    double real;
+  };
+
+  struct EstimationComparator
+  {
+    bool operator()(const Estimation &l, const Estimation &r) const
+    {
+      return l.estimated > r.estimated;
+    }
+  };
+
+  std::priority_queue<Estimation, std::vector<Estimation>, EstimationComparator> _queue;
+  std::vector<std::thread> _threads;
+  std::condition_variable _cv;
+  std::mutex _cvMutex;
+  std::mutex _queueMutex;
+  std::promise<std::vector<Path *>> _findPathPromise;
+  std::atomic_bool _promiseIsValid = false;
+  void finder();
 };
