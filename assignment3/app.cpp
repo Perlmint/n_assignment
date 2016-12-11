@@ -78,7 +78,7 @@ HRESULT App::Initialize()
       ShowWindow(m_hwnd, SW_SHOWNORMAL);
       UpdateWindow(m_hwnd);
 
-      SetTimer(m_hwnd, refreshTimerID, 100 / 60, nullptr);
+      SetTimer(m_hwnd, ID_TIMER_REFRESH_SCREEN, 100 / 60, nullptr);
       loadData();
     }
   }
@@ -327,10 +327,10 @@ LRESULT App::WndProc(
       {
          switch (wParam)
          {
-         case App::refreshTimerID:
+         case App::ID_TIMER_REFRESH_SCREEN:
            InvalidateRect(hWnd, nullptr, FALSE);
            break;
-         case App::loadingTimerID:
+         case App::ID_TIMER_LOADING_UPDATE:
            app->m_loadingPeriodCount = (app->m_loadingPeriodCount + 1) % 5;
            break;
          default: break;
@@ -420,13 +420,13 @@ void App::loadData()
 {
   std::thread([this]()
   {
-    SetTimer(m_hwnd, loadingTimerID, 300, nullptr);
+    SetTimer(m_hwnd, ID_TIMER_LOADING_UPDATE, 300, nullptr);
     World world{ "./data/MOCT_NODE.shp" , "./data/MOCT_LINK.shp" };
     m_world = std::move(world);
     m_loaded = true;
     m_center = m_world.center();
     m_zoomLevel = 5;
-    KillTimer(m_hwnd, loadingTimerID);
+    KillTimer(m_hwnd, ID_TIMER_LOADING_UPDATE);
     UpdateRenderSize();
     UpdateRenderArea();
   }).detach();

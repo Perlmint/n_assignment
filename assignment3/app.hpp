@@ -85,8 +85,8 @@ private:
   unique_interface<ID2D1SolidColorBrush> m_pMediumOrchidBrush;
   unique_interface<IDWriteFactory> m_pWriteFactory;
 
-  static const UINT refreshTimerID = 1;
-  static const UINT loadingTimerID = 2;
+  static const UINT ID_TIMER_REFRESH_SCREEN = 1;
+  static const UINT ID_TIMER_LOADING_UPDATE = 2;
   static const UINT ID_MENU_BEGIN_POINT = 3;
   static const UINT ID_MENU_END_POINT = 4;
 
