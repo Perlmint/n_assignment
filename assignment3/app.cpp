@@ -385,9 +385,9 @@ void App::DrawNode()
   auto maxY = m_center.y + m_renderSize.second / 2;
 
   auto leftChunk = static_cast<int>(minX / World::chunkSize);
-  auto rightChunk = static_cast<int>(ceilf(maxX / World::chunkSize));
+  auto rightChunk = static_cast<int>(ceill(maxX / World::chunkSize));
   auto bottomChunk = static_cast<int>(minY / World::chunkSize);
-  auto topChunk = static_cast<int>(ceilf(maxY / World::chunkSize));
+  auto topChunk = static_cast<int>(ceill(maxY / World::chunkSize));
   for (auto x = leftChunk; x <= rightChunk; ++x)
   {
     for (auto y = bottomChunk; y <= topChunk; ++y)
@@ -397,7 +397,11 @@ void App::DrawNode()
         auto nodeCenter = WorldToScreenPos(node.second->point());
         m_pRenderTarget->DrawRoundedRectangle(
           D2D1::RoundedRect(
-            D2D1::RectF(nodeCenter.x - 5, nodeCenter.y - 5, nodeCenter.x + 5, nodeCenter.y + 5),
+            D2D1::RectF(
+              static_cast<float>(nodeCenter.x - 2),
+              static_cast<float>(nodeCenter.y - 2),
+              static_cast<float>(nodeCenter.x + 2),
+              static_cast<float>(nodeCenter.y + 2)),
             3, 3), m_pCornflowerBlueBrush);
       }
     }
@@ -431,8 +435,8 @@ void App::UpdateZoomLevel(short delta)
   delta /= 100;
   auto prevLevel = m_zoomLevel;
   m_zoomLevel += delta;
-  m_zoomLevel = min(m_zoomLevel, 12);
-  m_zoomLevel = max(m_zoomLevel, 1);
+  m_zoomLevel = min(m_zoomLevel, zoomMax);
+  m_zoomLevel = max(m_zoomLevel, zoomMin);
   if (prevLevel != m_zoomLevel)
   {
     CalcRenderSize();

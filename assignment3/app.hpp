@@ -91,7 +91,9 @@ private:
   uint8_t m_loadingPeriodCount = 1;
   unique_interface<IDWriteTextFormat> m_loadingTextFormat;
 
-  static const int mapRatio= 30;
+  static const int mapRatio = 100;
+  static const int zoomMax = 120;
+  static const int zoomMin = 1;
   Point m_center;
   double m_zoomLevel;
   std::pair<double, double> m_renderSize;
