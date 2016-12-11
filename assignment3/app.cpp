@@ -315,6 +315,11 @@ LRESULT App::WndProc(
          }
       }
       break;
+      case WM_LBUTTONDOWN:
+      {
+        app->UpdateCenter(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), true);
+      }
+      break;
 
       case WM_MOUSEMOVE:
       {
@@ -322,10 +327,7 @@ LRESULT App::WndProc(
         // drag
         if (wParam & MK_LBUTTON)
         {
-          // current position
-          auto xPos = GET_X_LPARAM(lParam);
-          auto yPos = GET_Y_LPARAM(lParam);
-
+          app->UpdateCenter(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), false);
         }
       }
       break;
@@ -436,4 +438,19 @@ void App::UpdateZoomLevel(short delta)
     CalcRenderSize();
     InvalidateRect(m_hwnd, nullptr, TRUE);
   }
+}
+
+void App::UpdateCenter(int x, int y, bool down)
+{
+  if (!down)
+  {
+    auto deltaX = x - m_prevMousePos.first;
+    auto deltaY = y - m_prevMousePos.second;
+    auto renderTargetSize = m_pRenderTarget->GetSize();
+    m_center.x -= deltaX / renderTargetSize.width * m_renderSize.first;
+    m_center.y -= deltaY / renderTargetSize.height * m_renderSize.second;
+    InvalidateRect(m_hwnd, nullptr, TRUE);
+  }
+  m_prevMousePos.first = x;
+  m_prevMousePos.second = y;
 }

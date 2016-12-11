@@ -100,4 +100,7 @@ private:
   void CalcRenderSize();
   Point WorldToScreenPos(Point worldPos) const;
   void UpdateZoomLevel(short delta);
+
+  std::pair<int, int> m_prevMousePos;
+  void UpdateCenter(int x, int y, bool down);
 };
