@@ -55,7 +55,7 @@ void World::loadNode(const std::string &filePath)
   for (auto i = 0; i < entityCount; i++) {
     auto obj = SHPReadObject(shpHandle, i);
     auto nodeIdStr = DBFReadStringAttribute(dbfHandle, i, nodeIdIndex);
-    auto nodeId = atoi(nodeIdStr);
+    auto nodeId = atoll(nodeIdStr);
     auto node = new Node(obj, nodeId);
     _nodes.emplace(node->id(), node);
     SHPDestroyObject(obj);
@@ -86,18 +86,17 @@ void World::loadLink(const std::string &filePath)
     auto rankStr = DBFReadStringAttribute(dbfHandle, i, roadRankIndex);
     auto rank = atoi(rankStr);
     auto beginNodeIdStr = DBFReadStringAttribute(dbfHandle, i, beginNodeIndex);
-    auto beginNodeId = atoi(beginNodeIdStr);
+    auto beginNodeId = atoll(beginNodeIdStr);
     auto endNodeIdStr = DBFReadStringAttribute(dbfHandle, i, endNodeIndex);
-    auto endNodeId = atoi(endNodeIdStr);
+    auto endNodeId = atoll(endNodeIdStr);
     auto linkIdStr = DBFReadStringAttribute(dbfHandle, i, linkIdIndex);
-    auto linkId = atoi(linkIdStr);
+    auto linkId = atoll(linkIdStr);
     auto beginNode = GetNodeOrCreateDummy(beginNodeId);
     auto path = new Path(obj, *this, linkId, rank,
       beginNode,
       GetNodeOrCreateDummy(endNodeId));
     beginNode->linkedPaths.push_back(path);
     _paths.emplace(path->id(), path);
-    SHPDestroyObject(obj);
 
     chunks.clear();
     for (const auto &point : path->points())
@@ -109,13 +108,14 @@ void World::loadLink(const std::string &filePath)
     {
       _pathByChunks.insert(std::make_pair(chunkPoint, path));
     }
+    SHPDestroyObject(obj);
   }
 
   DBFClose(dbfHandle);
   SHPClose(shpHandle);
 }
 
-Node *World::GetNodeOrCreateDummy(int id)
+Node *World::GetNodeOrCreateDummy(uint64_t id)
 {
   auto itr = _nodes.find(id);
   if (itr == _nodes.end()) {

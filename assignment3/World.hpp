@@ -94,12 +94,12 @@ private:
   double _maxX;
   double _maxY;
 
-  std::unordered_map<int, std::unique_ptr<Node>> _nodes;
-  std::unordered_map<int, std::unique_ptr<Path>> _paths;
+  std::unordered_map<uint64_t, std::unique_ptr<Node>> _nodes;
+  std::unordered_map<uint64_t, std::unique_ptr<Path>> _paths;
 
   // for render
   std::multimap<PointI, Path*> _pathByChunks;
   std::multimap<PointI, Node*> _nodeByChunks;
   static PointI ChunkForPoint(double x, double y);
-  Node *GetNodeOrCreateDummy(int id);
+  Node *GetNodeOrCreateDummy(uint64_t id);
 };

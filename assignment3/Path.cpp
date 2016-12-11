@@ -1,7 +1,7 @@
 #include "Path.hpp"
 #include "World.hpp"
 
-Path::Path(SHPObject *obj, World &world, int id, int rank, Node *begin, Node *end)
+Path::Path(SHPObject *obj, World &world, uint64_t id, int rank, Node *begin, Node *end)
   : _id(id)
   , _rank(rank)
   , _begin(begin)
