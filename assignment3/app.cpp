@@ -683,7 +683,7 @@ void App::SetUserPoint(bool isBeginPoint)
         m_endNode = endNode->id();
         InvalidateRect(m_hwnd, nullptr, true);
       }
-      catch (const std::exception &e)
+      catch (const std::exception &)
       {
         // Do nothing
       }
