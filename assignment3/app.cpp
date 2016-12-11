@@ -328,16 +328,16 @@ LRESULT App::WndProc(
 
       case WM_TIMER:
       {
-         switch (wParam)
-         {
-         case App::ID_TIMER_REFRESH_SCREEN:
-           InvalidateRect(hWnd, nullptr, FALSE);
-           break;
-         case App::ID_TIMER_LOADING_UPDATE:
-           app->m_loadingPeriodCount = (app->m_loadingPeriodCount + 1) % 5;
-           break;
-         default: break;
-         }
+        switch (wParam)
+        {
+        case App::ID_TIMER_REFRESH_SCREEN:
+          InvalidateRect(hWnd, nullptr, FALSE);
+          break;
+        case App::ID_TIMER_LOADING_UPDATE:
+          app->m_loadingPeriodCount = (app->m_loadingPeriodCount + 1) % 5;
+          break;
+        default: break;
+        }
       }
       break;
       case WM_RBUTTONUP:
