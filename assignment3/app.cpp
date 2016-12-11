@@ -16,6 +16,9 @@ App::App()
   , m_clickedPoint(0, 0)
   , m_beginPoint(0, 0)
   , m_endPoint(0, 0)
+  , m_selectedPaths()
+  , m_beginNode(0)
+  , m_endNode(0)
 {
 }
 
@@ -490,6 +493,11 @@ void App::DrawPath()
         {
           continue;
         }
+        ID2D1Brush *pen = m_pLightSlateGrayBrush;
+        if (m_selectedPaths.find(path.second->id()) != m_selectedPaths.end())
+        {
+          pen = m_pCrimsonBrush;
+        }
 
         auto pointItr = path.second->points().begin(), pointEnd = path.second->points().end();
         auto prevPoint = WorldToScreenPos(*pointItr);
@@ -497,8 +505,13 @@ void App::DrawPath()
         {
           auto curPoint = WorldToScreenPos(*pointItr);
           m_pRenderTarget->DrawLine(
-            D2D1::Point2F(prevPoint.x, prevPoint.y),
-            D2D1::Point2F(curPoint.x, curPoint.y), m_pLightSlateGrayBrush);
+            D2D1::Point2F(
+              static_cast<float>(prevPoint.x),
+              static_cast<float>(prevPoint.y)),
+            D2D1::Point2F(
+              static_cast<float>(curPoint.x),
+              static_cast<float>(curPoint.y)),
+            pen);
           prevPoint = curPoint;
         }
       }
@@ -596,6 +609,34 @@ void App::SetUserPoint(bool isBeginPoint)
   }
   if (m_beginPointIsValid && m_endPointIsValid)
   {
-    auto path = m_world.FindPath(m_world.FindNearNode(m_beginPoint), m_world.FindNearNode(m_endPoint));
+    if (m_pathFindingThread != nullptr)
+    {
+      TerminateThread(m_pathFindingThread, 2);
+    }
+
+    auto thread = std::thread([this]() {
+      m_selectedPaths.clear();
+      m_beginNode = 0;
+      m_endNode = 0;
+      InvalidateRect(m_hwnd, nullptr, true);
+
+      auto beginNode = m_world.FindNearNode(m_beginPoint);
+      auto endNode = m_world.FindNearNode(m_endPoint);
+      auto paths = m_world.FindPath(beginNode, endNode);
+
+      if (!paths.empty())
+      {
+        for (const auto &path : paths)
+        {
+          m_selectedPaths.insert(path->id());
+        }
+        m_beginNode = beginNode->id();
+        m_endNode = endNode->id();
+        InvalidateRect(m_hwnd, nullptr, true);
+      }
+      m_pathFindingThread = nullptr;
+    });
+    m_pathFindingThread = thread.native_handle();
+    thread.detach();
   }
 }

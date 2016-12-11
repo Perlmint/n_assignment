@@ -3,6 +3,8 @@
 #include <d2d1.h>
 #include <dwrite.h>
 #include <atomic>
+#include <thread>
+#include <set>
 #include "World.hpp"
 
 template<typename T>
@@ -128,4 +130,10 @@ private:
   bool m_endPointIsValid = false;
   void SetMenuOpenedPoint(double x, double y);
   void SetUserPoint(bool isBeginPoint);
+
+  std::set<uint64_t> m_selectedPaths;
+  uint64_t m_beginNode;
+  uint64_t m_endNode;
+
+  void * m_pathFindingThread = nullptr;
 };
