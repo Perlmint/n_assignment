@@ -408,7 +408,7 @@ void App::DrawPath()
     {
       for (const auto &path : m_world.PathsByChunk(x, y))
       {
-        auto pointItr = path.second->points.begin(), pointEnd = path.second->points.end();
+        auto pointItr = path.second->points().begin(), pointEnd = path.second->points().end();
         auto prevPoint = WorldToScreenPos(*pointItr);
         for (++pointItr; pointItr != pointEnd; ++pointItr)
         {

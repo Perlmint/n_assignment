@@ -38,10 +38,9 @@ World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
   for (const auto &path : _paths)
   {
     chunks.clear();
-    auto itr = path->points.begin(), end = path->points.end();
-    for (; itr != end; ++itr)
+    for (const auto &point : path->points())
     {
-      auto curPoint = ChunkForPoint(itr->x, itr->y);
+      auto curPoint = ChunkForPoint(point.x, point.y);
       chunks.insert(curPoint);
     }
     for (const auto chunkPoint : chunks)
@@ -91,8 +90,8 @@ void World::loadLink(const std::string &filePath)
     auto obj = SHPReadObject(shpHandle, i);
     auto path = new Path(obj, *this);
     _paths.emplace(path);
-    _pathLink.insert(std::make_pair(path->points.front(), path));
-    _pathLink.insert(std::make_pair(path->points.back(), path));
+    _pathLink.insert(std::make_pair(path->points().front(), path));
+    _pathLink.insert(std::make_pair(path->points().back(), path));
     SHPDestroyObject(obj);
   }
 
