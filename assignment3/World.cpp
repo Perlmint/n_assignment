@@ -201,7 +201,7 @@ PointD World::ChunkCenter(const PointI &chunk) const
 
 struct Estimation
 {
-  Estimation(std::vector<Path *> &_p, const Node *_n, double _e, double r)
+  Estimation(std::vector<Path *> _p, const Node *_n, double _e, double r)
     : paths(_p)
     , node(_n)
     , estimated(_e)
@@ -231,6 +231,8 @@ std::vector<Path*> World::FindPath(Node *begin, Node *end) const
     return{};
   }
 
+  auto estimationLimit = begin->point().distance(end->point()) * 10;
+
   std::priority_queue<Estimation, std::vector<Estimation>, EstimationComparator> queue;
   queue.push(Estimation{
     std::vector<Path*>(),
@@ -252,12 +254,15 @@ std::vector<Path*> World::FindPath(Node *begin, Node *end) const
       }
 
       auto estimated = prev.real + path->length() + path->end()->point().distance(end->point());
-      queue.emplace(
-        prev.paths,
-        path->end(),
-        estimated,
-        prev.real + path->length()
-      );
+      if (estimated <= estimationLimit)
+      {
+        queue.emplace(
+          prev.paths,
+          path->end(),
+          estimated,
+          prev.real + path->length()
+        );
+      }
       prev.paths.pop_back();
     }
   }
