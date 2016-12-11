@@ -1,11 +1,12 @@
 #pragma once
 #include <cmath>
 
+template<typename T>
 class Point {
 public:
-  Point(double _x, double _y) : x(_x), y(_y) {}
-  double x;
-  double y;
+  Point(T _x, T _y) : x(_x), y(_y) {}
+  T x;
+  T y;
 
   bool operator==(const Point& other) const {
     return x == other.x && y == other.y;
@@ -13,17 +14,32 @@ public:
 
   double distance(const Point& other) const
   {
-    return std::sqrtl(std::powl(x - other.x, 2) + std::powl(y - other.y, 2));
+    return std::sqrt(std::pow(x - other.x, 2) + std::pow(y - other.y, 2));
+  }
+
+  bool operator<(const Point& other) const {
+    if (x != other.x)
+    {
+      return x < other.x;
+    }
+    return y < other.y;
+  }
+
+  bool operator>(const Point& other) const {
+    return other < *this;
   }
 };
 
+using PointD = Point<double>;
+using PointI = Point<int>;
+
 namespace std
 {
-  template<> struct hash<Point>
+  template<typename T> struct hash<Point<T>>
   {
   public:
-    size_t operator()(const Point& p) const {
-      return std::hash<double>()(p.x) * std::hash<double>()(p.y);
+    size_t operator()(const Point<T>& p) const {
+      return std::hash<T>()(p.x) * std::hash<T>()(p.y);
     }
   };
 }

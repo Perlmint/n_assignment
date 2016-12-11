@@ -34,7 +34,7 @@ World::World(const std::string &nodeFilePath, const std::string &linkFilePath)
     _nodeByChunks.insert(std::make_pair(chunkPos, node.second.get()));
   }
 
-  std::set<std::pair<int, int>> chunks;
+  std::set<PointI> chunks;
   for (const auto &path : _paths)
   {
     chunks.clear();
@@ -124,7 +124,7 @@ std::ostream &operator<<(std::ostream &s, const World &w)
 
 Node *World::getNode(double x, double y)
 {
-  auto itr = _nodes.find(Point(x, y));
+  auto itr = _nodes.find(PointD(x, y));
   if (itr == _nodes.end())
   {
     return nullptr;
@@ -135,27 +135,27 @@ Node *World::getNode(double x, double y)
   }
 }
 
-std::unordered_multimap<Point, Path*>::const_iterator World::getLinkedPaths(const Point &point)
+std::unordered_multimap<PointD, Path*>::const_iterator World::getLinkedPaths(const PointD &point)
 {
   return _pathLink.find(point);
 }
 
-IteratorRange<std::multimap<std::pair<int, int>, Node*>> World::NodesByChunk(int x, int y) const
+IteratorRange<std::multimap<PointI, Node*>> World::NodesByChunk(int x, int y) const
 {
-  auto range = _nodeByChunks.equal_range(std::make_pair(x, y));
-  return make_iterator_range<std::multimap<std::pair<int, int>, Node*>>(
+  auto range = _nodeByChunks.equal_range(PointI{ x, y });
+  return make_iterator_range<std::multimap<PointI, Node*>>(
     range.first,
     range.second);
 }
 
-IteratorRange<std::multimap<std::pair<int, int>, Path*>> World::PathsByChunk(int x, int y) const
+IteratorRange<std::multimap<PointI, Path*>> World::PathsByChunk(int x, int y) const
 {
-  return make_iterator_range<std::multimap<std::pair<int, int>, Path*>>(_pathByChunks.equal_range(std::make_pair(x, y)));
+  return make_iterator_range<std::multimap<PointI, Path*>>(_pathByChunks.equal_range(PointI{ x, y }));
 }
 
-std::pair<int, int> World::ChunkForPoint(double x, double y)
+PointI World::ChunkForPoint(double x, double y)
 {
-  return std::make_pair(
+  return PointI{
     static_cast<int>(x / chunkSize),
-    static_cast<int>(y / chunkSize));
+    static_cast<int>(y / chunkSize) };
 }

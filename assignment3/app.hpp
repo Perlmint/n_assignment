@@ -101,14 +101,14 @@ private:
     int mostTop;
     int mostBottom;
   } m_renderInfo;
-  Point m_center;
+  PointD m_center;
   double m_zoomLevel;
   std::pair<double, double> m_renderSize;
   void DrawNode();
   void DrawPath();
   void UpdateRenderSize();
   void UpdateRenderArea();
-  Point WorldToScreenPos(Point worldPos) const;
+  PointD WorldToScreenPos(PointD worldPos) const;
   void UpdateZoomLevel(short delta);
 
   std::pair<int, int> m_prevMousePos;

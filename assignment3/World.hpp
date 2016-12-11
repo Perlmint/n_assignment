@@ -77,17 +77,17 @@ public:
 
   friend std::ostream &operator<<(std::ostream &, const World &);
 
-  std::unordered_multimap<Point, Path*>::const_iterator getLinkedPaths(const Point &point);
+  std::unordered_multimap<PointD, Path*>::const_iterator getLinkedPaths(const PointD &point);
 
-  Point center() const
+  PointD center() const
   {
-    return Point((_maxX + _minX) / 2, (_maxY + _minY) / 2);
+    return PointD((_maxX + _minX) / 2, (_maxY + _minY) / 2);
   }
 
   const static int chunkSize = 1000;
 
-  IteratorRange<std::multimap<std::pair<int, int>, Node*>> NodesByChunk(int x, int y) const;
-  IteratorRange<std::multimap<std::pair<int, int>, Path*>> PathsByChunk(int x, int y) const;
+  IteratorRange<std::multimap<PointI, Node*>> NodesByChunk(int x, int y) const;
+  IteratorRange<std::multimap<PointI, Path*>> PathsByChunk(int x, int y) const;
 
 private:
   uint64_t loadDefaultInfo(SHPHandle handle);
@@ -97,12 +97,12 @@ private:
   double _maxX;
   double _maxY;
 
-  std::unordered_map<Point, std::unique_ptr<Node>> _nodes;
-  std::unordered_multimap<Point, Path*> _pathLink;
+  std::unordered_map<PointD, std::unique_ptr<Node>> _nodes;
+  std::unordered_multimap<PointD, Path*> _pathLink;
   std::unordered_set<std::unique_ptr<Path>> _paths;
 
   // for render
-  std::multimap<std::pair<int, int>, Path*> _pathByChunks;
-  std::multimap<std::pair<int, int>, Node*> _nodeByChunks;
-  static std::pair<int, int> ChunkForPoint(double x, double y);
+  std::multimap<PointI, Path*> _pathByChunks;
+  std::multimap<PointI, Node*> _nodeByChunks;
+  static PointI ChunkForPoint(double x, double y);
 };

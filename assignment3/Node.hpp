@@ -12,7 +12,7 @@ public:
   double x() const { return _point.x; }
   double y() const { return _point.y; }
 
-  const Point &point() const { return _point; }
+  const PointD &point() const { return _point; }
 private:
-  Point _point;
+  PointD _point;
 };

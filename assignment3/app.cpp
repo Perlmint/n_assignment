@@ -443,12 +443,12 @@ void App::UpdateRenderArea()
   m_renderInfo.mostTop = static_cast<int>(ceill(maxY / World::chunkSize));
 }
 
-Point App::WorldToScreenPos(Point worldPos) const
+PointD App::WorldToScreenPos(PointD worldPos) const
 {
   auto renderTargetSize = m_pRenderTarget->GetSize();
   auto x = worldPos.x - m_center.x;
   auto y = worldPos.y - m_center.y;
-  return Point{
+  return PointD{
     renderTargetSize.width / 2 + x / m_renderSize.first * renderTargetSize.width,
     renderTargetSize.height / 2 + y / m_renderSize.second * renderTargetSize.height };
 }

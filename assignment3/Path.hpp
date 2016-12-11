@@ -11,7 +11,7 @@ class Path {
 public:
     Path(SHPObject *obj, World &world);
     
-    std::vector<Point> points;
+    std::vector<PointD> points;
     Node * point1;
     Node * point2;
     double length;

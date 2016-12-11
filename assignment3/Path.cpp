@@ -6,7 +6,7 @@ Path::Path(SHPObject *obj, World &world)
 {
   for (auto i = 0; i < obj->nVertices; i++)
   {
-    Point newPoint{ obj->padfX[i], obj->padfY[i] };
+    PointD newPoint{ obj->padfX[i], obj->padfY[i] };
     if (i > 0)
     {
       length += points.back().distance(newPoint);
