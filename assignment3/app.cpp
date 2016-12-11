@@ -402,7 +402,25 @@ void App::DrawNode()
 
 void App::DrawPath()
 {
-  
+  for (auto x = m_renderInfo.mostLeft; x <= m_renderInfo.mostRight; ++x)
+  {
+    for (auto y = m_renderInfo.mostBottom; y <= m_renderInfo.mostTop; ++y)
+    {
+      for (const auto &path : m_world.PathsByChunk(x, y))
+      {
+        auto pointItr = path.second->points.begin(), pointEnd = path.second->points.end();
+        auto prevPoint = WorldToScreenPos(*pointItr);
+        for (++pointItr; pointItr != pointEnd; ++pointItr)
+        {
+          auto curPoint = WorldToScreenPos(*pointItr);
+          m_pRenderTarget->DrawLine(
+            D2D1::Point2F(prevPoint.x, prevPoint.y),
+            D2D1::Point2F(curPoint.x, curPoint.y), m_pLightSlateGrayBrush);
+          prevPoint = curPoint;
+        }
+      }
+    }
+  }
 }
 
 void App::UpdateRenderSize()
