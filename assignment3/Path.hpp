@@ -1,6 +1,6 @@
 #pragma once
 
-#include <list>
+#include <vector>
 #include "point.hpp"
 #include "shapefil.h"
 
@@ -11,7 +11,7 @@ class Path {
 public:
     Path(SHPObject *obj, World &world);
     
-    std::list<Point> points;
+    std::vector<Point> points;
     Node * point1;
     Node * point2;
     double length;
