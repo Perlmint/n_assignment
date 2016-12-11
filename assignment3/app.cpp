@@ -233,7 +233,8 @@ void App::OnResize(
     // error here, because the error will be returned again
     // the next time EndDraw is called.
     m_pRenderTarget->Resize(D2D1::SizeU(width, height));
-    CalcRenderSize();
+    UpdateRenderSize();
+    UpdateRenderArea();
   }
 }
 
@@ -373,24 +374,15 @@ void App::loadData()
     m_center = m_world.center();
     m_zoomLevel = 5;
     KillTimer(m_hwnd, loadingTimerID);
-    CalcRenderSize();
+    UpdateRenderSize();
   }).detach();
 }
 
 void App::DrawNode()
 {
-  auto minX = m_center.x - m_renderSize.first / 2;
-  auto maxX = m_center.x + m_renderSize.first / 2;
-  auto minY = m_center.y - m_renderSize.second / 2;
-  auto maxY = m_center.y + m_renderSize.second / 2;
-
-  auto leftChunk = static_cast<int>(minX / World::chunkSize);
-  auto rightChunk = static_cast<int>(ceill(maxX / World::chunkSize));
-  auto bottomChunk = static_cast<int>(minY / World::chunkSize);
-  auto topChunk = static_cast<int>(ceill(maxY / World::chunkSize));
-  for (auto x = leftChunk; x <= rightChunk; ++x)
+  for (auto x = m_renderInfo.mostLeft; x <= m_renderInfo.mostRight; ++x)
   {
-    for (auto y = bottomChunk; y <= topChunk; ++y)
+    for (auto y = m_renderInfo.mostBottom; y <= m_renderInfo.mostTop; ++y)
     {
       for (const auto &node : m_world.NodesByChunk(x, y))
       {
@@ -413,11 +405,24 @@ void App::DrawPath()
   
 }
 
-void App::CalcRenderSize()
+void App::UpdateRenderSize()
 {
   auto renderTargetSize = m_pRenderTarget->GetSize();
   auto ratio = World::chunkSize / mapRatio * m_zoomLevel;
   m_renderSize = std::make_pair(ratio * renderTargetSize.width, ratio * renderTargetSize.height);
+}
+
+void App::UpdateRenderArea()
+{
+  auto minX = m_center.x - m_renderSize.first / 2;
+  auto maxX = m_center.x + m_renderSize.first / 2;
+  auto minY = m_center.y - m_renderSize.second / 2;
+  auto maxY = m_center.y + m_renderSize.second / 2;
+
+  m_renderInfo.mostLeft = static_cast<int>(minX / World::chunkSize);
+  m_renderInfo.mostRight = static_cast<int>(ceill(maxX / World::chunkSize));
+  m_renderInfo.mostBottom = static_cast<int>(minY / World::chunkSize);
+  m_renderInfo.mostTop = static_cast<int>(ceill(maxY / World::chunkSize));
 }
 
 Point App::WorldToScreenPos(Point worldPos) const
@@ -439,7 +444,7 @@ void App::UpdateZoomLevel(short delta)
   m_zoomLevel = max(m_zoomLevel, zoomMin);
   if (prevLevel != m_zoomLevel)
   {
-    CalcRenderSize();
+    UpdateRenderSize();
     InvalidateRect(m_hwnd, nullptr, TRUE);
   }
 }
@@ -453,6 +458,7 @@ void App::UpdateCenter(int x, int y, bool down)
     auto renderTargetSize = m_pRenderTarget->GetSize();
     m_center.x -= deltaX / renderTargetSize.width * m_renderSize.first;
     m_center.y -= deltaY / renderTargetSize.height * m_renderSize.second;
+    UpdateRenderArea();
     InvalidateRect(m_hwnd, nullptr, TRUE);
   }
   m_prevMousePos.first = x;

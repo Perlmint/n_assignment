@@ -94,12 +94,20 @@ private:
   static const int mapRatio = 100;
   static const int zoomMax = 120;
   static const int zoomMin = 1;
+  struct
+  {
+    int mostLeft;
+    int mostRight;
+    int mostTop;
+    int mostBottom;
+  } m_renderInfo;
   Point m_center;
   double m_zoomLevel;
   std::pair<double, double> m_renderSize;
   void DrawNode();
   void DrawPath();
-  void CalcRenderSize();
+  void UpdateRenderSize();
+  void UpdateRenderArea();
   Point WorldToScreenPos(Point worldPos) const;
   void UpdateZoomLevel(short delta);
 
