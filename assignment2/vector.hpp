@@ -125,18 +125,16 @@ public:
     }
     else
     {
+      _heap.extract();
       if (_size == 4)
       {
+        
         _stack.clear();
         for (const auto &val : reverse(_heap))
         {
           _stack.push(val);
         }
         _stack.pop();
-      }
-      else
-      {
-        _heap.extract();
       }
     }
   }
