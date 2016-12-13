@@ -679,15 +679,15 @@ void App::SetUserPoint(bool isBeginPoint)
 
       auto beginNode = m_world.FindNearNode(m_beginPoint);
       auto endNode = m_world.FindNearNode(m_endPoint);
-      auto paths = m_world.FindPath(beginNode, endNode);
 
       try {
+        m_beginNode = beginNode->id();
+        m_endNode = endNode->id();
+        auto paths = m_world.FindPath(beginNode, endNode);
         for (const auto &path : paths.get())
         {
           m_selectedPaths.insert(path->id());
         }
-        m_beginNode = beginNode->id();
-        m_endNode = endNode->id();
         InvalidateRect(m_hwnd, nullptr, true);
         _pathFinding = false;
       }

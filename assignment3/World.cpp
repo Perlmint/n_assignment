@@ -251,7 +251,7 @@ PointD World::ChunkCenter(const PointI &chunk)
   return PointD{ (chunk.x + 0.5) * chunkSize, (chunk.y + 0.5) * chunkSize };
 }
 
-std::future<std::vector<Path*>> World::FindPath(Node *begin, Node *end)
+std::future<std::vector<const Path*>> World::FindPath(Node *begin, Node *end)
 {
   // for fast develop... remove later
   if (begin == nullptr || end == nullptr)
@@ -264,20 +264,28 @@ std::future<std::vector<Path*>> World::FindPath(Node *begin, Node *end)
   {
     _findPathPromise.set_exception(std::make_exception_ptr(std::runtime_error("Stopped")));
   }
-  _findPathPromise = std::promise<std::vector<Path*>>();
+  _findPathPromise = std::promise<std::vector<const Path*>>();
   _promiseIsValid = true;
   while (!_queue.empty())
   {
     _queue.pop();
   }
-  _queue.push(World::Estimation{
-    std::vector<Path*>(),
-    begin,
-    end,
-    0,
-    0
-  });
+  _estimations.clear();
+  _visited.clear();
+  _target = end;
+  auto &estimation = _estimations[begin->id()];
+  estimation.node = begin;
+  estimation.prev = nullptr;
+  estimation.path = nullptr;
+  estimation.estimated = estimation.real = 0;
+  _queue.push(&estimation);
   _queueMutex.unlock();
+  // waiting for previous finding thread
+  while (_waiting != _threads.size())
+  {
+    std::unique_lock<std::mutex> lock(_waitingCvMutex);
+    _waitingCv.wait(lock);
+  }
   _cv.notify_one();
 
   return _findPathPromise.get_future();
@@ -289,10 +297,13 @@ void World::finder()
   {
     {
       std::unique_lock<std::mutex> lock(_cvMutex);
+      ++_waiting;
       _cv.wait(lock);
     }
+    --_waiting;
+    _waitingCv.notify_all();
 
-    Estimation prev;
+    Estimation *prev;
     {
       std::unique_lock<std::mutex> queueLock(_queueMutex);
       if (_queue.empty())
@@ -301,40 +312,57 @@ void World::finder()
       }
       prev = _queue.top();
       _queue.pop();
+      _visited.insert(prev->node);
     }
 
-    for (const auto &path : prev.node->linkedPaths)
+    if (prev->node == _target)
     {
-      prev.paths.push_back(path);
-      if (path->end() == prev.target)
+      if (_promiseIsValid)
       {
-        if (_promiseIsValid)
+        _promiseIsValid = false;
+        std::vector<const Path *> ret{ prev->path };
+        auto est = prev->prev;
+        while (est->path != nullptr)
         {
-          _promiseIsValid = false;
-          _findPathPromise.set_value(prev.paths);
-          std::unique_lock<std::mutex> queueLock(_queueMutex);
-          while (!_queue.empty())
-          {
-            _queue.pop();
-          }
+          ret.push_back(est->path);
+          est = est->prev;
         }
-        break;
+
+        _findPathPromise.set_value(ret);
+        std::unique_lock<std::mutex> queueLock(_queueMutex);
+        while (!_queue.empty())
+        {
+          _queue.pop();
+        }
+      }
+      continue;;
+    }
+
+    for (const auto &path : prev->node->linkedPaths)
+    {
+      if (_visited.find(path->end()) != _visited.end())
+      {
+        continue;
       }
 
-      auto estimated = prev.real + path->length() + path->end()->point().distance(prev.target->point());
+      auto estimated = prev->real + path->length() + path->end()->point().distance(_target->point());
       {
         std::unique_lock<std::mutex> queueLock(_queueMutex);
-        _queue.emplace(
-          prev.paths,
-          path->end(),
-          prev.target,
-          estimated,
-          prev.real + path->length()
-        );
+
+        auto &est = _estimations[path->id()];
+        if (est.estimated < estimated)
+        {
+          continue;
+        }
+
+        est.prev = prev;
+        est.path = path;
+        est.node = path->end();
+        est.estimated = estimated;
+        est.real = prev->real + path->length();
+        _queue.push(&est);
       }
       _cv.notify_one();
-
-      prev.paths.pop_back();
     }
   }
 }

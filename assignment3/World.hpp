@@ -10,6 +10,7 @@
 #include <mutex>
 #include <queue>
 #include <future>
+#include <set>
 
 namespace std
 {
@@ -92,7 +93,7 @@ public:
 
   Node *FindNearNode(const PointD &point) const;
   static PointD ChunkCenter(const PointI &chunk);
-  std::future<std::vector<Path*>> FindPath(Node *begin, Node *end);
+  std::future<std::vector<const Path*>> FindPath(Node *begin, Node *end);
   void BeginFinders();
 
 private:
@@ -115,40 +116,41 @@ private:
 
   struct Estimation
   {
-    Estimation(): node(nullptr), target(nullptr), estimated(0), real(0)
+    Estimation()
+      : prev(nullptr), node(nullptr)
+      , path(nullptr), estimated(std::numeric_limits<double>::infinity())
+      , real(0)
     {
     }
 
-    Estimation(std::vector<Path *> _p, const Node *_n, const Node *_t, double _e, double r)
-      : paths(_p)
-      , node(_n)
-      , target(_t)
-      , estimated(_e)
-      , real(r)
-    {}
-
-    std::vector<Path *> paths;
+    Estimation *prev;
     const Node *node;
-    const Node *target;
+    const Path *path;
     double estimated;
     double real;
   };
 
   struct EstimationComparator
   {
-    bool operator()(const Estimation &l, const Estimation &r) const
+    bool operator()(const Estimation *l, const Estimation *r) const
     {
-      return l.estimated > r.estimated;
+      return l->estimated > r->estimated;
     }
   };
 
-  std::priority_queue<Estimation, std::vector<Estimation>, EstimationComparator> _queue;
+  std::priority_queue<Estimation*, std::vector<Estimation*>, EstimationComparator> _queue;
+  std::map<uint64_t, Estimation> _estimations;
+  std::set<const Node *> _visited;
   std::vector<std::thread> _threads;
+  const Node *_target = nullptr;
   std::condition_variable _cv;
   std::mutex _cvMutex;
   std::mutex _queueMutex;
-  std::promise<std::vector<Path *>> _findPathPromise;
+  std::promise<std::vector<const Path *>> _findPathPromise;
   std::atomic_bool _promiseIsValid = false;
+  std::atomic_uint8_t _waiting = 0;
+  std::condition_variable _waitingCv;
+  std::mutex _waitingCvMutex;
   bool _running = false;
   void finder();
 };
