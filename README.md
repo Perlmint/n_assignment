@@ -2,7 +2,7 @@
 assignment
 
 # developed environment
-* Windows 10 X64
+* Windows 10 x64
 * Visual Studio 2015
 
 # used library & api
