@@ -1,8 +1,10 @@
 #include <thread>
 #include <sstream>
 #include "Windowsx.h"
+#include "Shobjidl.h"
 
 #include "app.hpp"
+#include <locale>
 
 const int App::zoomForRoadRank[] = { 100, 80, 60, 50, 40, 30 };
 
@@ -83,7 +85,88 @@ HRESULT App::Initialize()
       UpdateWindow(m_hwnd);
 
       SetTimer(m_hwnd, ID_TIMER_REFRESH_SCREEN, 100 / 60, nullptr);
-      loadData();
+
+      IFileOpenDialog *pFileOpen;
+      std::string nodePath, linkPath;
+      char buf[512];
+      size_t length;
+
+      COMDLG_FILTERSPEC dialogSpec;
+
+      hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
+        IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
+
+      if (SUCCEEDED(hr))
+      {
+        dialogSpec.pszName = L"MOCT_NODE.shp";
+        dialogSpec.pszSpec = L"MOCT_NODE.shp";
+
+        // Show the Open dialog box.
+        pFileOpen->SetTitle(L"Select MOCT_NODE.shp");
+        pFileOpen->SetFileTypes(1, &dialogSpec);
+        hr = pFileOpen->Show(nullptr);
+
+        // Get the file name from the dialog box.
+        if (SUCCEEDED(hr))
+        {
+          IShellItem *pItem;
+          hr = pFileOpen->GetResult(&pItem);
+          if (SUCCEEDED(hr))
+          {
+            PWSTR pszFilePath;
+            hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+
+            // Display the file name to the user.
+            if (SUCCEEDED(hr))
+            {
+              wcstombs_s(&length, buf, 512, pszFilePath, 512);
+              nodePath.assign(buf, length);
+              CoTaskMemFree(pszFilePath);
+            }
+            pItem->Release();
+          }
+        }
+
+        pFileOpen->Release();
+      }
+
+      hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
+        IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
+      if (SUCCEEDED(hr))
+      {
+        dialogSpec.pszName = L"MOCT_LINK.shp";
+        dialogSpec.pszSpec = L"MOCT_LINK.shp";
+
+        // Show the Open dialog box.
+        pFileOpen->SetTitle(L"Select MOCT_LINK.shp");
+        pFileOpen->SetFileTypes(1, &dialogSpec);
+        hr = pFileOpen->Show(nullptr);
+
+        // Get the file name from the dialog box.
+        if (SUCCEEDED(hr))
+        {
+          IShellItem *pItem;
+          hr = pFileOpen->GetResult(&pItem);
+          if (SUCCEEDED(hr))
+          {
+            PWSTR pszFilePath;
+            hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+
+            // Display the file name to the user.
+            if (SUCCEEDED(hr))
+            {
+              wcstombs_s(&length, buf, 512, pszFilePath, 512);
+              linkPath.assign(buf, length);
+              CoTaskMemFree(pszFilePath);
+            }
+            pItem->Release();
+          }
+        }
+        pFileOpen->Release();
+
+        loadData(nodePath, linkPath);
+      }
+      CoUninitialize();
     }
   }
 
@@ -439,12 +522,12 @@ LRESULT App::WndProc(
   return result;
 }
 
-void App::loadData()
+void App::loadData(const std::string &nodePath, const std::string &linkPath)
 {
-  std::thread([this]()
+  std::thread([this, nodePath, linkPath]()
   {
     SetTimer(m_hwnd, ID_TIMER_LOADING_UPDATE, 300, nullptr);
-    World world{ "./data/MOCT_NODE.shp" , "./data/MOCT_LINK.shp" };
+    World world{ nodePath, linkPath };
     m_world = std::move(world);
     m_loaded = true;
     m_center = m_world.center();
@@ -519,7 +602,7 @@ void App::DrawPath()
       {
         if (path.second->rank() > type)
         {
-          continue; 
+          continue;
         }
         ID2D1Brush *pen = m_pLightSlateGrayBrush;
         if (m_selectedPaths.find(path.second->id()) != m_selectedPaths.end())
@@ -552,7 +635,7 @@ void App::DrawPath()
   {
     DrawNode(node->point(), m_pCornflowerBlueBrush);
     ID2D1Brush *pen = nullptr;
-    PointD point{0, 0};
+    PointD point{ 0, 0 };
     if (node->id() == m_beginNode)
     {
       pen = m_pCrimsonBrush;

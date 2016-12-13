@@ -75,7 +75,7 @@ private:
     LPARAM lParam
   );
 
-  void loadData();
+  void loadData(const std::string &nodePath, const std::string &linkPath);
 
 private:
   HWND m_hwnd;
