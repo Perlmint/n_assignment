@@ -108,31 +108,11 @@ private:
 
   static int getParentIndex(int index)
   {
-    if (index == 0)
-    {
-      return -1;
-    }
-
-    // make 1-based index
-    ++index;
-    auto ret = 1;
-    while (ret < index)
-    {
-      ret = (ret << 1) + 1;
-    }
-    ret >>= 1;
-
-    return (ret >> 1) + (index - ret + 1) / 2 - 1;
+    return ((index + 1) >> 1) - 1;
   }
 
   static int getLeftChildIndex(int index)
   {
-    ++index;
-    auto ret = 1;
-    while(ret < index)
-    {
-      ret = (ret << 1) + 1;
-    }
-    return ret;
+    return ((index + 1) << 1) - 1;
   }
 };
