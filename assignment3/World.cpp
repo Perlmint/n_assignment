@@ -216,6 +216,7 @@ void AddToQueue(const PointI &point, const PointD &target, std::set<PointI> &que
 Node *World::FindNearNode(const PointD &point) const
 {
   Node *node = nullptr;
+  auto nodeDistance = std::numeric_limits<double>::infinity();
   std::priority_queue<FindNearInfo, std::vector<FindNearInfo>, FindNearComparator> chunkQueue;
   std::set<PointI> queued;
   auto beginChunk = ChunkForPoint(point.x, point.y);
@@ -228,12 +229,18 @@ Node *World::FindNearNode(const PointD &point) const
   {
     auto chunk = chunkQueue.top();
     chunkQueue.pop();
-    node = FindNearNodeInChunk(point, chunk.first);
-    if (node != nullptr && node->point().distance(point) < chunkSize / 3 * queued.size())
+    auto found = FindNearNodeInChunk(point, chunk.first);
+    if (found != nullptr)
     {
-      break;
+      auto distance = found->point().distance(point);
+      if (node == nullptr || distance < nodeDistance)
+      {
+        node = found;
+        nodeDistance = distance;
+      }
     }
-    else
+
+    if (node == nullptr)
     {
       AddToQueue(PointI{ chunk.first.x - 1, chunk.first.y }, point, queued, chunkQueue);
       AddToQueue(PointI{ chunk.first.x + 1, chunk.first.y }, point, queued, chunkQueue);
