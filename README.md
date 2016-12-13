@@ -12,7 +12,7 @@ assignment
   * load shp, dbf files
 
 # build
-you can use Visual Studio solution or CMake.
+you can use Visual Studio solution file or CMake.
 ## Visual Stuidio solution
 open `assignments.sln` with visual studio and build it.
 
@@ -28,6 +28,6 @@ cmake ..
 1. open `MOCT_NODE.shp` and `MOCT_LINK.shp` with file open dialog.
 2. wait loading
 3. click right mouse button to open context menu
-4. select start point & end point for finding path.
-5. mouse wheel can change zoom level.
+  - select start point & end point to find path.
+5. change zoom level with mouse wheel scroll.
 6. moving center of map with left click & drag
