@@ -2,6 +2,7 @@
 #include <functional>
 #include "stack.hpp"
 #include "heap.hpp"
+#include "utils.hpp"
 
 /**
  * Custom Vector using stack or heap
@@ -227,6 +228,7 @@ public:
 
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
+  using const_reverse_iterator = typename std::vector<T>::const_reverse_iterator;
 
   const_iterator begin() const
   {
@@ -248,7 +250,7 @@ public:
     return _heap.end();
   }
 
-  const_iterator rbegin() const
+  const_reverse_iterator rbegin() const
   {
     if (_size > 4)
     {
@@ -258,7 +260,7 @@ public:
     return _heap.rbegin();
   }
 
-  const_iterator rend() const
+  const_reverse_iterator rend() const
   {
     if (_size > 4)
     {

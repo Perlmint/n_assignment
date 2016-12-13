@@ -80,12 +80,12 @@ public:
     return _data.end();
   }
 
-  typename std::vector<T>::const_iterator rbegin() const
+  typename std::vector<T>::const_reverse_iterator rbegin() const
   {
     return _data.rbegin();
   }
 
-  typename std::vector<T>::const_iterator rend() const
+  typename std::vector<T>::const_reverse_iterator rend() const
   {
     return _data.rend();
   }
