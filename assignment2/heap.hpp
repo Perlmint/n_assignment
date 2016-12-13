@@ -18,7 +18,7 @@ public:
     _data.push_back(val);
     int curIndex = _data.size() - 1;
     auto parentIndex = getParentIndex(curIndex);
-    while(parentIndex != -1)
+    while (parentIndex != -1)
     {
       if (_comparator(_data[curIndex], _data[parentIndex]))
       {
@@ -42,24 +42,27 @@ public:
     auto childIndex = getLeftChildIndex(curIndex);
 
     int lastIndex = _data.size() - 1;
-    while(childIndex <= lastIndex)
+    while (childIndex <= lastIndex)
     {
-      if (_comparator(_data[childIndex], _data[curIndex]))
+      auto largest = curIndex;
+      if (_comparator(_data[childIndex], _data[largest]))
       {
-        std::swap(_data[curIndex], _data[childIndex]);
-        curIndex = childIndex;
-        childIndex = getLeftChildIndex(childIndex);
+        largest = childIndex;
+      }
+      if (childIndex < lastIndex && _comparator(_data[childIndex + 1], _data[largest]))
+      {
+        largest = childIndex + 1;
+      }
+
+      if (largest != curIndex)
+      {
+        std::swap(_data[curIndex], _data[largest]);
+        curIndex = largest;
+        childIndex = getLeftChildIndex(curIndex);
       }
       else
       {
-        if (childIndex % 2 == 0)
-        {
-          break;
-        }
-        else
-        {
-          ++childIndex;
-        }
+        break;
       }
     }
     return ret;
