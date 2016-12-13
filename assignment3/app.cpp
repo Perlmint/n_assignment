@@ -460,7 +460,13 @@ void App::DrawInfo()
 {
   std::wstringstream stream;
   stream << "zoom : " << m_zoomLevel << std::endl;
-  stream << "center : (" << m_center.x << ", " << m_center.y << ")" << std::endl;
+  stream << "center :" << std::endl <<
+    "  " << m_center.x << std::endl <<
+    "  " << m_center.y << std::endl;
+  if (_pathFinding)
+  {
+    stream << "Path finding...";
+  }
   auto infoText = stream.str();
   m_pRenderTarget->DrawTextA(infoText.c_str(), infoText.length(),
     m_infoTextFormat, D2D1::RectF(0, 0, 100, 100), m_pLightSlateGrayBrush);
@@ -665,6 +671,7 @@ void App::SetUserPoint(bool isBeginPoint)
   if (m_beginPointIsValid && m_endPointIsValid)
   {
     std::thread([this]() {
+      _pathFinding = true;
       m_selectedPaths.clear();
       m_beginNode = 0;
       m_endNode = 0;
@@ -682,9 +689,11 @@ void App::SetUserPoint(bool isBeginPoint)
         m_beginNode = beginNode->id();
         m_endNode = endNode->id();
         InvalidateRect(m_hwnd, nullptr, true);
+        _pathFinding = false;
       }
       catch (const std::exception &)
       {
+        _pathFinding = false;
         // Do nothing
       }
     }).detach();

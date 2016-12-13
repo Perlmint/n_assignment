@@ -137,5 +137,5 @@ private:
   uint64_t m_beginNode;
   uint64_t m_endNode;
 
-  void * m_pathFindingThread = nullptr;
+  std::atomic_bool _pathFinding = false;
 };
