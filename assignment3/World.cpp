@@ -204,24 +204,41 @@ struct FindNearComparator
   }
 };
 
+void AddToQueue(const PointI &point, const PointD &target, std::set<PointI> &queued, std::priority_queue<FindNearInfo, std::vector<FindNearInfo>, FindNearComparator> &queue)
+{
+  if (queued.find(point) == queued.end())
+  {
+    queue.push(FindNearComparator::FindNearInfo(point, target));
+    queued.insert(point);
+  }
+}
+
 Node *World::FindNearNode(const PointD &point) const
 {
   Node *node = nullptr;
   std::priority_queue<FindNearInfo, std::vector<FindNearInfo>, FindNearComparator> chunkQueue;
+  std::set<PointI> queued;
   auto beginChunk = ChunkForPoint(point.x, point.y);
-  chunkQueue.push(FindNearComparator::FindNearInfo(beginChunk, point));
-  chunkQueue.push(FindNearComparator::FindNearInfo(PointI{ beginChunk.x - 1, beginChunk.y }, point));
-  chunkQueue.push(FindNearComparator::FindNearInfo(PointI{ beginChunk.x + 1, beginChunk.y }, point));
-  chunkQueue.push(FindNearComparator::FindNearInfo(PointI{ beginChunk.x, beginChunk.y - 1 }, point));
-  chunkQueue.push(FindNearComparator::FindNearInfo(PointI{ beginChunk.x, beginChunk.y + 1 }, point));
+  AddToQueue(beginChunk, point, queued, chunkQueue);
+  AddToQueue(PointI{ beginChunk.x - 1, beginChunk.y }, point, queued, chunkQueue);
+  AddToQueue(PointI{ beginChunk.x + 1, beginChunk.y }, point, queued, chunkQueue);
+  AddToQueue(PointI{ beginChunk.x, beginChunk.y - 1 }, point, queued, chunkQueue);
+  AddToQueue(PointI{ beginChunk.x, beginChunk.y + 1 }, point, queued, chunkQueue);
   while (!chunkQueue.empty())
   {
     auto chunk = chunkQueue.top();
     chunkQueue.pop();
     node = FindNearNodeInChunk(point, chunk.first);
-    if (node != nullptr && node->point().distance(point) < chunkSize / 3)
+    if (node != nullptr && node->point().distance(point) < chunkSize / 3 * queued.size())
     {
       break;
+    }
+    else
+    {
+      AddToQueue(PointI{ chunk.first.x - 1, chunk.first.y }, point, queued, chunkQueue);
+      AddToQueue(PointI{ chunk.first.x + 1, chunk.first.y }, point, queued, chunkQueue);
+      AddToQueue(PointI{ chunk.first.x, chunk.first.y - 1 }, point, queued, chunkQueue);
+      AddToQueue(PointI{ chunk.first.x, chunk.first.y + 1 }, point, queued, chunkQueue);
     }
   }
 
